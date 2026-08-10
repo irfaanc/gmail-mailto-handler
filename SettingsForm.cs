@@ -19,11 +19,17 @@ internal sealed class SettingsForm : Form
     private readonly Button _unregister = new();
     private readonly Button _save = new();
     private readonly Button _cancel = new();
+    private readonly Label _status = new();
 
-    public SettingsForm(AppConfig config)
+    private readonly RegistrationStatus _registrationStatus;
+    private readonly string? _registrationError;
+
+    public SettingsForm(AppConfig config, RegistrationStatus status, string? registrationError)
     {
         _config = config;
         _accounts = config.Accounts.Select(a => a.Clone()).ToList();
+        _registrationStatus = status;
+        _registrationError = registrationError;
 
         // 96 DPI units throughout; see the note in PickerForm about why the
         // scaling declaration has to sit inside SuspendLayout/ResumeLayout.
@@ -37,7 +43,7 @@ internal sealed class SettingsForm : Form
         _list.HideSelection = false;
         _list.MultiSelect = false;
         _list.Columns.Add("Display name");
-        _list.Columns.Add("Index", -1, HorizontalAlignment.Right);
+        _list.Columns.Add("Gmail address");
         _list.SetBounds(12, 12, 340, 252);
         _list.DoubleClick += (_, _) => EditSelected();
         _list.SelectedIndexChanged += (_, _) => UpdateButtons();
@@ -48,18 +54,21 @@ internal sealed class SettingsForm : Form
         Place(_up, "Move up", 364, 116, 140, 26, (_, _) => MoveSelected(-1));
         Place(_down, "Move down", 364, 148, 140, 26, (_, _) => MoveSelected(1));
 
-        Place(_register, "Register as mailto handler...", 12, 276, 200, 28, OnRegister);
-        Place(_unregister, "Unregister", 220, 276, 90, 28, OnUnregister);
-        Place(_save, "Save", 348, 276, 75, 28, OnSave);
+        _status.AutoEllipsis = true;
+        _status.SetBounds(12, 272, 492, 18);
+
+        Place(_register, "Set as default mail handler...", 12, 300, 200, 28, OnRegister);
+        Place(_unregister, "Unregister", 220, 300, 90, 28, OnUnregister);
+        Place(_save, "Save", 348, 300, 75, 28, OnSave);
 
         _cancel.Text = "Cancel";
-        _cancel.SetBounds(429, 276, 75, 28);
+        _cancel.SetBounds(429, 300, 75, 28);
         _cancel.DialogResult = DialogResult.Cancel;
 
-        ClientSize = new Size(516, 316);
+        ClientSize = new Size(516, 340);
         Controls.AddRange(new Control[]
         {
-            _list, _add, _edit, _remove, _up, _down, _register, _unregister, _save, _cancel,
+            _list, _add, _edit, _remove, _up, _down, _status, _register, _unregister, _save, _cancel,
         });
 
         Text = "Mailto Picker settings";
@@ -71,7 +80,46 @@ internal sealed class SettingsForm : Form
         ResumeLayout(performLayout: false);
         PerformLayout();
 
+        ShowStatus();
         Reload(0);
+    }
+
+    /// <summary>
+    /// Reports whether Windows is actually routing mail links here, which is the
+    /// state the user cares about. Being registered only makes the app
+    /// selectable, so saying "registered" while every mailto link goes elsewhere
+    /// would be technically true and completely useless.
+    /// </summary>
+    private void ShowStatus()
+    {
+        if (_registrationStatus == RegistrationStatus.Failed)
+        {
+            Set("Could not write the registry entries. " + _registrationError, Color.Firebrick);
+            return;
+        }
+
+        if (!Registration.IsEffectiveHandler())
+        {
+            Set("Windows is still sending mail links elsewhere. Use \"Set as default mail handler\".",
+                Color.Firebrick);
+            return;
+        }
+
+        string note = _registrationStatus switch
+        {
+            RegistrationStatus.Created => " Registry entries were just created.",
+            RegistrationStatus.Repaired => " The stored path was stale and now points at this copy.",
+            RegistrationStatus.OtherCopy => $" Registered to another copy: {Registration.RegisteredExePath()}",
+            _ => "",
+        };
+
+        Set("Mailto Picker is handling mail links." + note, SystemColors.GrayText);
+
+        void Set(string text, Color colour)
+        {
+            _status.Text = text;
+            _status.ForeColor = colour;
+        }
     }
 
     private static void Place(Button button, string text, int x, int y, int width, int height, EventHandler onClick)
@@ -99,8 +147,8 @@ internal sealed class SettingsForm : Form
     /// </summary>
     private void ScaleColumns()
     {
-        _list.Columns[0].Width = LogicalToDeviceUnits(240);
-        _list.Columns[1].Width = LogicalToDeviceUnits(75);
+        _list.Columns[0].Width = LogicalToDeviceUnits(135);
+        _list.Columns[1].Width = LogicalToDeviceUnits(190);
     }
 
     private void Reload(int selectIndex)
@@ -110,7 +158,7 @@ internal sealed class SettingsForm : Form
         foreach (Account account in _accounts)
         {
             var item = new ListViewItem(account.Name);
-            item.SubItems.Add(account.AccountIndex.ToString());
+            item.SubItems.Add(account.EmailAddress);
             _list.Items.Add(item);
         }
         _list.EndUpdate();
@@ -163,6 +211,14 @@ internal sealed class SettingsForm : Form
         int index = SelectedIndex;
         if (index < 0) return;
 
+        if (_accounts.Count == 1)
+        {
+            MessageBox.Show(this,
+                "This is the only account. Add another before removing this one.",
+                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
         DialogResult answer = MessageBox.Show(this,
             $"Remove \"{_accounts[index].Name}\"?", "Mailto Picker",
             MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -182,37 +238,73 @@ internal sealed class SettingsForm : Form
         Reload(target);
     }
 
-    private void OnRegister(object? sender, EventArgs e)
+    protected override void OnShown(EventArgs e)
     {
-        try
+        base.OnShown(e);
+
+        // Both prompts live here rather than before the window opens, so they
+        // have an owner and the user can see what they refer to behind them.
+        if (!EnsureFirstAccount())
         {
-            Registration.Register();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(this, "Could not write the registry entries:\r\n\r\n" + ex.Message,
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            DialogResult = DialogResult.Cancel;   // closes a modal form
             return;
         }
 
-        DialogResult answer = MessageBox.Show(this,
-            "Registered as a mailto: handler candidate.\r\n\r\n" +
-            "Windows will not let an app make itself the default, so open " +
-            "Settings > Apps > Default apps, search for \"Mailto Picker\", and set it " +
-            "as the handler for MAILTO.\r\n\r\nOpen that page now?",
-            "Mailto Picker", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+        RegistrationPrompt.ReportIfFailed(this, _registrationStatus, _registrationError);
 
-        if (answer != DialogResult.Yes) return;
+        // Declining does not close the window: the user may well have opened
+        // settings to manage accounts, and throwing them out over an unrelated
+        // question would make that impossible.
+        RegistrationPrompt.EnsureDefaultHandler(this);
+        ShowStatus();
+    }
 
+    /// <summary>
+    /// Demands an account before anything else. Without one there is nowhere to
+    /// send mail, so an empty list is not a state worth letting the user sit in.
+    /// </summary>
+    /// <returns>False if the user declined, in which case there is nothing to do.</returns>
+    private bool EnsureFirstAccount()
+    {
+        if (_accounts.Count > 0) return true;
+
+        using (var dialog = new AccountDialog(null))
+        {
+            if (dialog.ShowDialog(this) != DialogResult.OK)
+            {
+                MessageBox.Show(this,
+                    "Mailto Picker needs at least one Gmail account before it can send " +
+                    "anything.\r\n\r\nRun it again when you are ready to add one.",
+                    "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return false;
+            }
+
+            _accounts.Add(dialog.Result);
+        }
+
+        // Committed straight away rather than left pending on the Save button:
+        // the user was made to create this, so it should not evaporate if they
+        // close the window.
+        _config.Accounts = _accounts.Select(a => a.Clone()).ToList();
+        _config.LastUsedAccount = _config.Accounts[0].Name;
         try
         {
-            Registration.OpenDefaultAppsSettings();
+            _config.Save();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, "Could not open Windows Settings:\r\n\r\n" + ex.Message,
+            MessageBox.Show(this, $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}",
                 "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+
+        Reload(0);
+        return true;
+    }
+
+    private void OnRegister(object? sender, EventArgs e)
+    {
+        RegistrationPrompt.EnsureDefaultHandler(this);
+        ShowStatus();
     }
 
     private void OnUnregister(object? sender, EventArgs e)
@@ -225,8 +317,12 @@ internal sealed class SettingsForm : Form
         try
         {
             Registration.Unregister();
-            MessageBox.Show(this, "Registry entries removed.", "Mailto Picker",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ShowStatus();
+            MessageBox.Show(this,
+                "Registry entries removed.\r\n\r\n" +
+                "They will be written again the next time this app runs, since it " +
+                "registers itself on startup. Delete the app to be rid of it.",
+                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {

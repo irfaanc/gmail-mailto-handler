@@ -46,9 +46,11 @@ internal static class Program
         AppConfig? config = LoadConfigOrExplain();
         if (config is null) return 3;
 
+        RegistrationStatus status = Registration.Prepare(out string? registrationError);
+
         // ShowDialog rather than Application.Run: a modeless form ignores
         // DialogResult, so the Cancel button would do nothing.
-        using var form = new SettingsForm(config);
+        using var form = new SettingsForm(config, status, registrationError);
         form.ShowDialog();
         return 0;
     }
@@ -69,12 +71,23 @@ internal static class Program
         AppConfig? config = LoadConfigOrExplain();
         if (config is null) return 3;
 
+        // Write or repoint the registry entries as needed. Deliberately quiet
+        // and non-fatal: the user clicked a mail link, and nothing about the
+        // registry should interrupt or delay that.
+        Registration.Prepare(out _);
+
         if (config.Accounts.Count == 0)
         {
-            ShowError(
+            ShowWarning(
                 "No accounts are configured yet, so there is nowhere to send this.\r\n\r\n" +
-                "The settings window will open next; add an account and try the link again.");
-            return RunSettings();
+                "Add one in the settings window that opens next and this message will carry on.");
+            RunSettings();
+
+            // Pick up whatever the settings window just wrote, then continue
+            // with the original link rather than making the user click it again.
+            AppConfig? updated = LoadConfigOrExplain();
+            if (updated is null || updated.Accounts.Count == 0) return 3;
+            config = updated;
         }
 
         using var picker = new PickerForm(config, request);
@@ -82,7 +95,7 @@ internal static class Program
             return 0;   // Esc: do nothing at all.
 
         Account account = picker.SelectedAccount;
-        string url = request.ToGmailComposeUrl(account.AccountIndex);
+        string url = request.ToGmailComposeUrl(account.EmailAddress);
 
         try
         {
@@ -105,6 +118,11 @@ internal static class Program
         {
             ShowWarning($"The message opened, but the last-used account could not be saved to\r\n{AppConfig.FilePath}\r\n\r\n{ex.Message}");
         }
+
+        // Asked only after the message is on its way: nothing should delay or
+        // interrupt the thing the user actually clicked. Declining here simply
+        // ends the run, which is all that is left to do anyway.
+        RegistrationPrompt.EnsureDefaultHandler(null);
 
         return 0;
     }

@@ -7,12 +7,20 @@ internal sealed class Account
 {
     public string Name { get; set; } = "";
 
-    /// <summary>The N in Google's /mail/u/N/ path, i.e. which signed-in account.</summary>
-    public int AccountIndex { get; set; }
+    /// <summary>
+    /// The mailbox to send from, handed to Gmail as authuser.
+    ///
+    /// This is the only account selector. Gmail's /mail/u/N/ index was dropped:
+    /// N is a position in the browser's signed-in list rather than an identity,
+    /// so it renumbers whenever accounts are signed in or out and silently
+    /// composes from the wrong account. An address names the mailbox and cannot
+    /// drift, and a wrong one surfaces as Google's account chooser instead.
+    /// </summary>
+    public string EmailAddress { get; set; } = "";
 
     public override string ToString() => Name;
 
-    public Account Clone() => new() { Name = Name, AccountIndex = AccountIndex };
+    public Account Clone() => new() { Name = Name, EmailAddress = EmailAddress };
 }
 
 internal sealed class AppConfig
@@ -36,11 +44,12 @@ internal sealed class AppConfig
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    public static AppConfig CreateDefault() => new()
-    {
-        Accounts = { new Account { Name = "Personal", AccountIndex = 0 } },
-        LastUsedAccount = "Personal",
-    };
+    /// <summary>
+    /// A new config starts empty on purpose. Seeding a guessed entry would put a
+    /// plausible-looking account in the list that nobody chose; the settings
+    /// window asks for the first real one instead.
+    /// </summary>
+    public static AppConfig CreateDefault() => new();
 
     /// <summary>
     /// Reads config.json. A missing file is not an error: a default config is
@@ -81,7 +90,13 @@ internal sealed class AppConfig
             throw new InvalidDataException($"{path} is empty or contains only \"null\".");
 
         if (config.Accounts is null) config.Accounts = new List<Account>();
-        config.Accounts.RemoveAll(a => a is null || string.IsNullOrWhiteSpace(a.Name));
+
+        // An entry without an address cannot select a mailbox, so it is dropped
+        // rather than left in the picker to fail at send time. The settings
+        // window then asks for a real one.
+        config.Accounts.RemoveAll(a => a is null
+            || string.IsNullOrWhiteSpace(a.Name)
+            || string.IsNullOrWhiteSpace(a.EmailAddress));
         return config;
     }
 

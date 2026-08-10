@@ -3,6 +3,25 @@ using Microsoft.Win32;
 
 namespace MailtoPicker;
 
+/// <summary>Outcome of the startup pass that keeps the registry entries honest.</summary>
+internal enum RegistrationStatus
+{
+    /// <summary>The entries were absent and have just been written.</summary>
+    Created,
+
+    /// <summary>Already registered, and pointing at this exe.</summary>
+    Current,
+
+    /// <summary>The registered exe was gone, so the entries now point here.</summary>
+    Repaired,
+
+    /// <summary>Registered to a different copy that still exists. Left alone.</summary>
+    OtherCopy,
+
+    /// <summary>The entries could not be written.</summary>
+    Failed,
+}
+
 /// <summary>
 /// Registers this exe as a *candidate* mailto: handler, entirely under
 /// HKEY_CURRENT_USER. Nothing here makes the app the default; Windows guards
@@ -31,11 +50,24 @@ internal static class Registration
         }
     }
 
+    private static string CommandFor(string exe) => $"\"{exe}\" \"%1\"";
+
+    private static string IconFor(string exe) => $"\"{exe}\",0";
+
+    /// <summary>
+    /// True if a registered command line belongs to this app rather than some
+    /// other handler. Matched on the exe's file name, not its full path, so a
+    /// registration left behind by a copy that has since moved is still
+    /// recognised as ours.
+    /// </summary>
+    private static bool ReferencesThisApp(string command) =>
+        command.Contains(Path.GetFileName(ExePath), StringComparison.OrdinalIgnoreCase);
+
     public static void Register()
     {
         string exe = ExePath;
-        string command = $"\"{exe}\" \"%1\"";
-        string icon = $"\"{exe}\",0";
+        string command = CommandFor(exe);
+        string icon = IconFor(exe);
 
         // The protocol class itself. This is the fallback Windows uses when no
         // explicit UserChoice exists for mailto. Whatever is there now gets
@@ -157,11 +189,179 @@ internal static class Registration
         return registered?.GetValue(AppKeyName) is not null;
     }
 
+    /// <summary>
+    /// The path in UserChoice that decides which app Windows actually hands
+    /// mailto links to. Readable by anyone; only writing it is guarded.
+    /// </summary>
+    private const string UserChoicePath =
+        @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\mailto\UserChoice";
+
+    /// <summary>The ProgID Windows is currently routing mailto to, if any.</summary>
+    public static string? DefaultHandlerProgId()
+    {
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(UserChoicePath);
+        return key?.GetValue("ProgId") as string;
+    }
+
+    /// <summary>
+    /// Whether Windows will actually launch this app for a mailto link.
+    ///
+    /// Checking UserChoice alone is not enough. When no choice is recorded,
+    /// Windows falls through to the protocol class itself -- so the app can be
+    /// the real handler while UserChoice is empty, and reporting "not the
+    /// default" then would be visibly wrong to anyone watching their mail links
+    /// open in it.
+    /// </summary>
+    public static bool IsEffectiveHandler()
+    {
+        string? chosen = DefaultHandlerProgId();
+        return string.IsNullOrEmpty(chosen)
+            ? OwnsMailtoClass()
+            : string.Equals(chosen, ProgId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Clears the recorded default so mailto falls through to this app's own
+    /// class entry, which is the only lever available: UserChoice itself cannot
+    /// be written usefully, because Windows validates it against an undocumented
+    /// hash and discards entries that do not match.
+    ///
+    /// This replaces whatever the user's current mail handler is, so it belongs
+    /// behind an explicit, clearly labelled action rather than happening quietly
+    /// at startup.
+    ///
+    /// It is not always permitted. UCPD, the User Choice Protection Driver,
+    /// blocks these keys for the protocols it covers, and that coverage varies
+    /// by Windows build -- so the result is read back from the registry rather
+    /// than inferred from the call succeeding, and the caller falls back to
+    /// walking the user through Settings.
+    /// </summary>
+    public static bool TryClaimDefault(out string? error)
+    {
+        error = null;
+        try
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(UserChoicePath, throwOnMissingSubKey: false);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+
+        if (IsEffectiveHandler()) return true;
+
+        error = "Windows kept the previous handler.";
+        return false;
+    }
+
+    /// <summary>
+    /// Brings the registry entries into line with this exe, writing them if they
+    /// are missing. There is no installer, so first run *is* installation, and
+    /// registering a protocol handler is what installation does -- it makes the
+    /// app selectable and nothing more. It cannot make itself the default.
+    ///
+    /// Repointing an existing registration fires only when the registered exe is
+    /// *gone from disk*, not merely different from this one. A path that still
+    /// resolves is a working registration belonging to another copy, and running
+    /// a second copy out of a build folder must not quietly steal it.
+    /// </summary>
+    public static RegistrationStatus Prepare(out string? error)
+    {
+        error = null;
+        try
+        {
+            if (!IsRegistered())
+            {
+                Register();
+                return RegistrationStatus.Created;
+            }
+
+            string? registeredExe = RegisteredExePath();
+            if (registeredExe is null)
+            {
+                // Registered, but the command is missing or unreadable.
+                return Repair(out error);
+            }
+
+            if (string.Equals(registeredExe, ExePath, StringComparison.OrdinalIgnoreCase))
+                return RegistrationStatus.Current;
+
+            if (File.Exists(registeredExe))
+                return RegistrationStatus.OtherCopy;
+
+            return Repair(out error);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return RegistrationStatus.Failed;
+        }
+    }
+
+    /// <summary>The exe path recorded in our ProgID's open command, if any.</summary>
+    public static string? RegisteredExePath()
+    {
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey($@"Software\Classes\{ProgId}\shell\open\command");
+        return key?.GetValue(null) is string command ? ExtractExePath(command) : null;
+    }
+
+    /// <summary>Pulls the executable out of a "path" "%1" style command line.</summary>
+    private static string? ExtractExePath(string command)
+    {
+        command = command.Trim();
+        if (command.Length == 0) return null;
+
+        if (command[0] == '"')
+        {
+            int end = command.IndexOf('"', 1);
+            return end > 1 ? command[1..end] : null;
+        }
+
+        int space = command.IndexOf(' ');
+        return space < 0 ? command : command[..space];
+    }
+
+    private static RegistrationStatus Repair(out string? error)
+    {
+        error = null;
+        try
+        {
+            string exe = ExePath;
+            string command = CommandFor(exe);
+            string icon = IconFor(exe);
+
+            // The ProgID is namespaced to this app, so it is always safe to
+            // rewrite. This is also the entry that matters most: when the user
+            // has picked us in Default apps, Windows records the ProgID name and
+            // resolves the exe through here.
+            WriteProtocolClass($@"Software\Classes\{ProgId}", DisplayName, command, icon);
+
+            using (RegistryKey capabilities = Registry.CurrentUser.CreateSubKey(CapabilitiesPath, true))
+            {
+                capabilities.SetValue("ApplicationIcon", icon);
+            }
+
+            // The bare mailto class is shared ground -- only touch it while it
+            // still names this app. If something else has taken it over, leave
+            // it alone. Note this deliberately does not re-run the backup: what
+            // is there is our own stale entry, not a third party's.
+            if (OwnsMailtoClass())
+                WriteProtocolClass(MailtoClassPath, "URL:MailTo Protocol", command, icon);
+
+            return RegistrationStatus.Repaired;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return RegistrationStatus.Failed;
+        }
+    }
+
     private static bool OwnsMailtoClass()
     {
-        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"Software\Classes\mailto\shell\open\command");
-        return key?.GetValue(null) is string command &&
-               command.Contains(ExePath, StringComparison.OrdinalIgnoreCase);
+        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(MailtoClassPath + @"\shell\open\command");
+        return key?.GetValue(null) is string command && ReferencesThisApp(command);
     }
 
     private static void WriteProtocolClass(string path, string description, string command, string icon)
@@ -189,7 +389,13 @@ internal static class Registration
         }
     }
 
-    /// <summary>Opens Settings > Apps > Default apps so the user can select us.</summary>
+    /// <summary>
+    /// Opens Settings > Apps > Default apps.
+    ///
+    /// No deep link: "?registeredAppUser=MailtoPicker" was tried and Windows 11
+    /// ignores the parameter, landing on the same generic page. The walkthrough
+    /// text carries the directions instead.
+    /// </summary>
     public static void OpenDefaultAppsSettings()
     {
         Process.Start(new ProcessStartInfo("ms-settings:defaultapps") { UseShellExecute = true });

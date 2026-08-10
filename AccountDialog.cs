@@ -8,8 +8,8 @@ internal sealed class AccountDialog : Form
 {
     private readonly Label _nameLabel = new();
     private readonly TextBox _name = new();
-    private readonly Label _indexLabel = new();
-    private readonly NumericUpDown _index = new();
+    private readonly Label _emailLabel = new();
+    private readonly TextBox _email = new();
     private readonly Button _ok = new();
     private readonly Button _cancel = new();
 
@@ -30,13 +30,11 @@ internal sealed class AccountDialog : Form
         _name.Text = existing?.Name ?? "";
         _name.SetBounds(12, 32, 336, 23);
 
-        _indexLabel.Text = "Account index (the N in mail.google.com/mail/u/N/)";
-        _indexLabel.SetBounds(12, 66, 336, 18);
+        _emailLabel.Text = "Gmail address to send from";
+        _emailLabel.SetBounds(12, 66, 336, 18);
 
-        _index.Minimum = 0;
-        _index.Maximum = 99;
-        _index.Value = existing?.AccountIndex ?? 0;
-        _index.SetBounds(12, 86, 80, 23);
+        _email.Text = existing?.EmailAddress ?? "";
+        _email.SetBounds(12, 86, 336, 23);
 
         _ok.Text = "OK";
         _ok.SetBounds(186, 122, 80, 27);
@@ -48,7 +46,7 @@ internal sealed class AccountDialog : Form
         _cancel.DialogResult = DialogResult.Cancel;
 
         ClientSize = new Size(364, 161);
-        Controls.AddRange(new Control[] { _nameLabel, _name, _indexLabel, _index, _ok, _cancel });
+        Controls.AddRange(new Control[] { _nameLabel, _name, _emailLabel, _email, _ok, _cancel });
 
         Text = existing is null ? "Add account" : "Edit account";
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -68,13 +66,33 @@ internal sealed class AccountDialog : Form
         string name = _name.Text.Trim();
         if (name.Length == 0)
         {
-            MessageBox.Show(this, "Give the account a display name.", "Mailto Picker",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            DialogResult = DialogResult.None;
-            _name.Focus();
+            Reject("Give the account a display name.", _name);
             return;
         }
 
-        Result = new Account { Name = name, AccountIndex = (int)_index.Value };
+        // Only a sanity check. A wrong-but-plausible address means Gmail shows
+        // its account chooser, which is a visible failure rather than a
+        // silently wrong sender.
+        string email = _email.Text.Trim();
+        if (email.Length == 0)
+        {
+            Reject("Enter the Gmail address this account should send from.", _email);
+            return;
+        }
+
+        if (!email.Contains('@'))
+        {
+            Reject("That does not look like an email address.", _email);
+            return;
+        }
+
+        Result = new Account { Name = name, EmailAddress = email };
+    }
+
+    private void Reject(string message, Control focus)
+    {
+        MessageBox.Show(this, message, "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        DialogResult = DialogResult.None;
+        focus.Focus();
     }
 }

@@ -103,13 +103,22 @@ internal sealed class MailtoRequest
         value.Length <= max ? value : value[..max] + "...";
 
     /// <summary>
-    /// Builds the Gmail compose URL for the given signed-in account slot.
-    /// Empty fields are left out entirely; every value is escaped with
-    /// Uri.EscapeDataString so spaces become %20 rather than "+".
+    /// Builds the Gmail compose URL for the given mailbox. Empty fields are left
+    /// out entirely; every value is escaped with Uri.EscapeDataString so spaces
+    /// become %20 rather than "+".
     /// </summary>
-    public string ToGmailComposeUrl(int accountIndex)
+    /// <param name="authUser">
+    /// The Gmail address to send from. Selects the mailbox by name, so the path
+    /// slot below is only a starting point.
+    /// </param>
+    public string ToGmailComposeUrl(string authUser)
     {
-        var parameters = new List<string>(6);
+        var parameters = new List<string>(7)
+        {
+            // First, matching the form this was verified against.
+            "authuser=" + Uri.EscapeDataString(authUser.Trim()),
+        };
+
         Append(parameters, "to", To);
         Append(parameters, "cc", Cc);
         Append(parameters, "bcc", Bcc);
@@ -117,11 +126,9 @@ internal sealed class MailtoRequest
         Append(parameters, "body", Body);
         parameters.Add("tf=cm");
 
-        var url = new StringBuilder("https://mail.google.com/mail/u/");
-        url.Append(accountIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        url.Append("/?");
-        url.Append(string.Join("&", parameters));
-        return url.ToString();
+        // authuser overrides whatever the path says, and slot 0 is the one slot
+        // guaranteed to exist whenever anybody is signed in at all.
+        return "https://mail.google.com/mail/u/0/?" + string.Join("&", parameters);
     }
 
     private static void Append(List<string> parameters, string name, string value)
