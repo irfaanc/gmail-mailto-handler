@@ -27,8 +27,13 @@ internal sealed class AppConfig
 {
     public List<Account> Accounts { get; set; } = new();
 
-    /// <summary>Display name of the account picked last time, if any.</summary>
-    public string? LastUsedAccount { get; set; }
+    /// <summary>
+    /// Address of the account sent from last time, if any. Keyed on the address
+    /// rather than the display name for the same reason accounts are: the name
+    /// is free text the user can change at any moment, and renaming an account
+    /// would silently reset the picker's default.
+    /// </summary>
+    public string? LastUsedAddress { get; set; }
 
     [JsonIgnore]
     public static string DirectoryPath =>
@@ -112,6 +117,9 @@ internal sealed class AppConfig
         else File.Move(temp, path);
     }
 
-    public Account? FindByName(string? name) =>
-        name is null ? null : Accounts.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
+    public Account? FindByAddress(string? address) =>
+        string.IsNullOrWhiteSpace(address)
+            ? null
+            : Accounts.FirstOrDefault(a =>
+                string.Equals(a.EmailAddress, address, StringComparison.OrdinalIgnoreCase));
 }

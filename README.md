@@ -106,7 +106,7 @@ last already highlighted:
     { "Name": "Personal", "EmailAddress": "you@gmail.com" },
     { "Name": "Work", "EmailAddress": "you@company.com" }
   ],
-  "LastUsedAccount": "Work"
+  "LastUsedAddress": "you@company.com"
 }
 ```
 

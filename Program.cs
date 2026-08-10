@@ -109,7 +109,7 @@ internal static class Program
 
         // Remember the choice for next time. Worth a warning if it fails, but the
         // mail is already open so this is not fatal.
-        config.LastUsedAccount = account.Name;
+        config.LastUsedAddress = account.EmailAddress;
         try
         {
             config.Save();

@@ -100,7 +100,7 @@ internal sealed class PickerForm : Form
         // Pre-select the account used last time, falling back to the first one.
         // Applied in OnLoad, not here: a ListBox drops a SelectedIndex set
         // before its handle exists.
-        Account? last = config.FindByName(config.LastUsedAccount);
+        Account? last = config.FindByAddress(config.LastUsedAddress);
         _initialIndex = last is null ? 0 : config.Accounts.IndexOf(last);
 
         ResumeLayout(performLayout: false);

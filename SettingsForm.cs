@@ -198,9 +198,10 @@ internal sealed class SettingsForm : Form
         using var dialog = new AccountDialog(_accounts[index]);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
-        // Keep "last used" pointing at this account even if it was renamed.
-        if (string.Equals(_config.LastUsedAccount, _accounts[index].Name, StringComparison.OrdinalIgnoreCase))
-            _config.LastUsedAccount = dialog.Result.Name;
+        // Renaming no longer matters, but changing the address does: follow it
+        // so the picker's default does not quietly jump to another account.
+        if (string.Equals(_config.LastUsedAddress, _accounts[index].EmailAddress, StringComparison.OrdinalIgnoreCase))
+            _config.LastUsedAddress = dialog.Result.EmailAddress;
 
         _accounts[index] = dialog.Result;
         Reload(index);
@@ -286,7 +287,7 @@ internal sealed class SettingsForm : Form
         // the user was made to create this, so it should not evaporate if they
         // close the window.
         _config.Accounts = _accounts.Select(a => a.Clone()).ToList();
-        _config.LastUsedAccount = _config.Accounts[0].Name;
+        _config.LastUsedAddress = _config.Accounts[0].EmailAddress;
         try
         {
             _config.Save();
@@ -341,8 +342,8 @@ internal sealed class SettingsForm : Form
         }
 
         _config.Accounts = _accounts.Select(a => a.Clone()).ToList();
-        if (_config.FindByName(_config.LastUsedAccount) is null)
-            _config.LastUsedAccount = _config.Accounts[0].Name;
+        if (_config.FindByAddress(_config.LastUsedAddress) is null)
+            _config.LastUsedAddress = _config.Accounts[0].EmailAddress;
 
         try
         {
