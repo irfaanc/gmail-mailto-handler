@@ -89,12 +89,51 @@ The offer repeats on every launch while the app is not the handler. Handling
 mail links is the only thing it does, so remembering a "no" would leave a
 permanently useless app on the machine.
 
-When a `mailto:` link is clicked, the picker appears with the account you used
-last already highlighted:
+When a `mailto:` link is clicked, the picker appears:
 
 - **Enter**, or clicking the highlighted row, opens Gmail immediately.
 - Clicking a different row selects it; click again (or press Enter) to send.
 - **Esc** cancels and nothing happens.
+
+## Rules
+
+The highlighted account is decided by a rule, if one matches the recipient.
+Otherwise it is the first account in the list, which is why that list is
+reorderable: the top entry is the default.
+
+There is deliberately no "last account you used" memory. It would make the
+default depend on invisible state left over from an unrelated message.
+
+### Creating them
+
+From the picker, not from an editor. Alongside the accounts there is a
+**Remember** box offering to always use the chosen account for that address, or
+for its whole domain. It defaults to remembering nothing, so a rule only ever
+exists because it was asked for, and it resets on every launch so it cannot
+quietly mint rules for later recipients.
+
+Choosing again **replaces** an existing rule. That is also how a rule is edited:
+send to that recipient again, pick the right account, and remember again.
+
+### How they are matched
+
+An exact address rule always beats a domain rule covering the same recipient.
+Precedence is by specificity, so rules never need ordering and there is nothing
+to drag up and down.
+
+The recipient matched against is the first `To` address, or the first `Cc`/`Bcc`
+if there is no `To`. A link can carry several recipients across different
+domains, so this is a choice rather than a fact; the picker names the rule that
+fired, so a surprising highlight can be traced.
+
+### Seeing and removing them
+
+**Rules...** in the settings window lists them, with a Remove button. There is no
+add or edit there on purpose: the picker already does both, and a second
+authoring path would only be a way for the two to disagree.
+
+Editing an account's address repoints its rules. Deleting an account deletes the
+rules aiming at it, and says how many before doing it.
 
 ## Config
 
@@ -106,9 +145,16 @@ last already highlighted:
     { "Name": "Personal", "EmailAddress": "you@gmail.com" },
     { "Name": "Work", "EmailAddress": "you@company.com" }
   ],
-  "LastUsedAddress": "you@company.com"
+  "Rules": [
+    { "Kind": "Domain",  "Match": "company.com",      "EmailAddress": "you@company.com" },
+    { "Kind": "Address", "Match": "friend@company.com", "EmailAddress": "you@gmail.com" }
+  ]
 }
 ```
+
+`Kind` is written by name rather than as a number so the file stays
+hand-editable. Rules point at accounts by address, matching how accounts are
+identified everywhere else.
 
 An entry with no `EmailAddress` is dropped on load rather than left in the
 picker to fail at send time, so a hand-edited config that is missing one just
@@ -129,10 +175,12 @@ than failing silently.
 | --- | --- |
 | `Program.cs` | Entry point, argument handling, error dialogs |
 | `MailtoRequest.cs` | RFC 2368 parsing and Gmail compose URL building |
-| `Config.cs` | `config.json` load/save |
-| `PickerForm.cs` | The account chooser |
+| `EmailAddresses.cs` | Pulling a bare address out of a recipient field |
+| `Config.cs` | `config.json` load/save, rules and matching |
+| `PickerForm.cs` | The account chooser, and where rules are created |
 | `SettingsForm.cs` | Account list editor |
 | `AccountDialog.cs` | Add/edit one account |
+| `RulesDialog.cs` | List and remove rules |
 | `Registration.cs` | HKCU registry entries, self-healing, the Settings deep link |
 | `RegistrationPrompt.cs` | The startup offer and post-registration walkthrough |
 

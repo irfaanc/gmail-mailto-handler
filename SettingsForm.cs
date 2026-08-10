@@ -15,6 +15,7 @@ internal sealed class SettingsForm : Form
     private readonly Button _remove = new();
     private readonly Button _up = new();
     private readonly Button _down = new();
+    private readonly Button _rules = new();
     private readonly Button _register = new();
     private readonly Button _unregister = new();
     private readonly Button _save = new();
@@ -54,6 +55,9 @@ internal sealed class SettingsForm : Form
         Place(_up, "Move up", 364, 116, 140, 26, (_, _) => MoveSelected(-1));
         Place(_down, "Move down", 364, 148, 140, 26, (_, _) => MoveSelected(1));
 
+        // Set apart from the account buttons: it acts on rules, not accounts.
+        Place(_rules, "Rules...", 364, 206, 140, 26, OnRules);
+
         _status.AutoEllipsis = true;
         _status.SetBounds(12, 272, 492, 18);
 
@@ -68,7 +72,8 @@ internal sealed class SettingsForm : Form
         ClientSize = new Size(516, 340);
         Controls.AddRange(new Control[]
         {
-            _list, _add, _edit, _remove, _up, _down, _status, _register, _unregister, _save, _cancel,
+            _list, _add, _edit, _remove, _up, _down, _rules,
+            _status, _register, _unregister, _save, _cancel,
         });
 
         Text = "Mailto Picker settings";
@@ -198,10 +203,18 @@ internal sealed class SettingsForm : Form
         using var dialog = new AccountDialog(_accounts[index]);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
-        // Renaming no longer matters, but changing the address does: follow it
-        // so the picker's default does not quietly jump to another account.
-        if (string.Equals(_config.LastUsedAddress, _accounts[index].EmailAddress, StringComparison.OrdinalIgnoreCase))
-            _config.LastUsedAddress = dialog.Result.EmailAddress;
+        // Rules point at accounts by address, so changing an account's address
+        // would otherwise orphan every rule aiming at it.
+        string was = _accounts[index].EmailAddress;
+        string now = dialog.Result.EmailAddress;
+        if (!string.Equals(was, now, StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (Rule rule in _config.Rules)
+            {
+                if (string.Equals(rule.EmailAddress, was, StringComparison.OrdinalIgnoreCase))
+                    rule.EmailAddress = now;
+            }
+        }
 
         _accounts[index] = dialog.Result;
         Reload(index);
@@ -220,11 +233,23 @@ internal sealed class SettingsForm : Form
             return;
         }
 
-        DialogResult answer = MessageBox.Show(this,
-            $"Remove \"{_accounts[index].Name}\"?", "Mailto Picker",
+        // A rule aiming at a removed account would sit there matching recipients
+        // and resolving to nothing, so say what else is going and take it too.
+        string address = _accounts[index].EmailAddress;
+        int rules = _config.Rules.Count(r =>
+            string.Equals(r.EmailAddress, address, StringComparison.OrdinalIgnoreCase));
+
+        string question = rules == 0
+            ? $"Remove \"{_accounts[index].Name}\"?"
+            : $"Remove \"{_accounts[index].Name}\"?\r\n\r\n" +
+              $"{rules} rule{(rules == 1 ? "" : "s")} pointing at it will be removed too.";
+
+        DialogResult answer = MessageBox.Show(this, question, "Mailto Picker",
             MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
+        _config.Rules.RemoveAll(r =>
+            string.Equals(r.EmailAddress, address, StringComparison.OrdinalIgnoreCase));
         _accounts.RemoveAt(index);
         Reload(index);
     }
@@ -287,7 +312,6 @@ internal sealed class SettingsForm : Form
         // the user was made to create this, so it should not evaporate if they
         // close the window.
         _config.Accounts = _accounts.Select(a => a.Clone()).ToList();
-        _config.LastUsedAddress = _config.Accounts[0].EmailAddress;
         try
         {
             _config.Save();
@@ -300,6 +324,12 @@ internal sealed class SettingsForm : Form
 
         Reload(0);
         return true;
+    }
+
+    private void OnRules(object? sender, EventArgs e)
+    {
+        using var dialog = new RulesDialog(_config);
+        dialog.ShowDialog(this);
     }
 
     private void OnRegister(object? sender, EventArgs e)
@@ -342,8 +372,6 @@ internal sealed class SettingsForm : Form
         }
 
         _config.Accounts = _accounts.Select(a => a.Clone()).ToList();
-        if (_config.FindByAddress(_config.LastUsedAddress) is null)
-            _config.LastUsedAddress = _config.Accounts[0].EmailAddress;
 
         try
         {

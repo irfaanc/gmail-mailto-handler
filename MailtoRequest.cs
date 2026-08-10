@@ -137,6 +137,27 @@ internal sealed class MailtoRequest
         parameters.Add(name + "=" + Uri.EscapeDataString(value));
     }
 
+    /// <summary>
+    /// The recipient that rules are matched against: the first To address, or
+    /// the first Cc/Bcc if there is no To.
+    ///
+    /// A link can carry several recipients across different domains, so this is
+    /// a choice rather than a fact. First To is the predictable one, and the
+    /// picker names what it matched so a surprising pick is visible.
+    /// </summary>
+    public string PrimaryRecipient
+    {
+        get
+        {
+            foreach (string field in new[] { To, Cc, Bcc })
+            {
+                string address = EmailAddresses.Normalise(field);
+                if (address.Length > 0) return address;
+            }
+            return "";
+        }
+    }
+
     /// <summary>Short one-line summary used in the picker window header.</summary>
     public string DescribeRecipient()
     {

@@ -1,9 +1,21 @@
 # Design: sender rules and automatic forwarding
 
-**Status: designed, not built.** Nothing in this document is implemented. The
-shipped app still shows the picker for every mail link. This is a record of a
-design discussion so it can be picked up later without rediscovering the
-reasoning.
+**Status: half built.**
+
+| Part | State |
+| --- | --- |
+| Rules, precedence, creation from the picker | **built** |
+| Rules list with delete, in settings | **built** |
+| Reason line naming the rule that fired | **built** |
+| Global last-used removed | **built** |
+| Automatic forwarding (skipping the picker) | not built |
+| Shift override | not built |
+| The notification | not built |
+| Explanation record and retry payload | not built |
+
+Rules currently *preselect* an account. The picker still appears every time.
+Everything from "Automatic forwarding" onwards is still a design, and the
+reasoning below is kept so it can be picked up without rediscovering it.
 
 ## The problem
 

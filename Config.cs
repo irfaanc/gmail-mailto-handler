@@ -23,17 +23,38 @@ internal sealed class Account
     public Account Clone() => new() { Name = Name, EmailAddress = EmailAddress };
 }
 
+internal enum RuleKind
+{
+    /// <summary>Matches one exact recipient address.</summary>
+    Address,
+
+    /// <summary>Matches every recipient at a domain.</summary>
+    Domain,
+}
+
+/// <summary>
+/// "Mail to this recipient goes from this account." Written from the picker
+/// rather than an editor, so the rule is declared at the moment its context is
+/// on screen.
+/// </summary>
+internal sealed class Rule
+{
+    public RuleKind Kind { get; set; }
+
+    /// <summary>The address or the domain, depending on <see cref="Kind"/>.</summary>
+    public string Match { get; set; } = "";
+
+    /// <summary>Address of the account to send from. Accounts are identified by address everywhere.</summary>
+    public string EmailAddress { get; set; } = "";
+
+    public Rule Clone() => new() { Kind = Kind, Match = Match, EmailAddress = EmailAddress };
+}
+
 internal sealed class AppConfig
 {
     public List<Account> Accounts { get; set; } = new();
 
-    /// <summary>
-    /// Address of the account sent from last time, if any. Keyed on the address
-    /// rather than the display name for the same reason accounts are: the name
-    /// is free text the user can change at any moment, and renaming an account
-    /// would silently reset the picker's default.
-    /// </summary>
-    public string? LastUsedAddress { get; set; }
+    public List<Rule> Rules { get; set; } = new();
 
     [JsonIgnore]
     public static string DirectoryPath =>
@@ -47,6 +68,10 @@ internal sealed class AppConfig
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+
+        // Rule kinds as "Domain" rather than 1: this file is meant to be
+        // readable and hand-editable.
+        Converters = { new JsonStringEnumConverter() },
     };
 
     /// <summary>
@@ -115,6 +140,46 @@ internal sealed class AppConfig
         // Replace in one step so an interrupted write cannot leave a half file.
         if (File.Exists(path)) File.Replace(temp, path, null);
         else File.Move(temp, path);
+    }
+
+    /// <summary>
+    /// The rule that decides who sends to this recipient, if any. Exact address
+    /// beats domain, always: precedence is by specificity, so rules never need
+    /// ordering and the settings window needs no way to reorder them.
+    /// </summary>
+    public Rule? MatchRule(string? recipient)
+    {
+        string address = EmailAddresses.Normalise(recipient);
+        if (address.Length == 0) return null;
+
+        Rule? exact = Rules.FirstOrDefault(r =>
+            r.Kind == RuleKind.Address &&
+            string.Equals(r.Match, address, StringComparison.OrdinalIgnoreCase));
+        if (exact is not null) return exact;
+
+        string domain = EmailAddresses.DomainOf(address);
+        if (domain.Length == 0) return null;
+
+        return Rules.FirstOrDefault(r =>
+            r.Kind == RuleKind.Domain &&
+            string.Equals(r.Match, domain, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The account a matching rule points at, if the rule and account both still exist.</summary>
+    public Account? MatchAccount(string? recipient) => FindByAddress(MatchRule(recipient)?.EmailAddress);
+
+    /// <summary>
+    /// Adds a rule, replacing any existing one for the same target. Choosing
+    /// again in the picker is how a rule gets edited, so this must overwrite
+    /// rather than accumulate a second, contradictory entry.
+    /// </summary>
+    public void SetRule(RuleKind kind, string match, string emailAddress)
+    {
+        if (string.IsNullOrWhiteSpace(match) || string.IsNullOrWhiteSpace(emailAddress)) return;
+
+        Rules.RemoveAll(r => r.Kind == kind &&
+            string.Equals(r.Match, match, StringComparison.OrdinalIgnoreCase));
+        Rules.Add(new Rule { Kind = kind, Match = match.Trim(), EmailAddress = emailAddress.Trim() });
     }
 
     public Account? FindByAddress(string? address) =>

@@ -107,16 +107,19 @@ internal static class Program
             return 4;
         }
 
-        // Remember the choice for next time. Worth a warning if it fails, but the
-        // mail is already open so this is not fatal.
-        config.LastUsedAddress = account.EmailAddress;
-        try
+        // Write the rule the user asked for, if any. Worth a warning if it fails,
+        // but the mail is already open so this is not fatal.
+        if (picker.RememberAs is RuleKind kind)
         {
-            config.Save();
-        }
-        catch (Exception ex)
-        {
-            ShowWarning($"The message opened, but the last-used account could not be saved to\r\n{AppConfig.FilePath}\r\n\r\n{ex.Message}");
+            config.SetRule(kind, picker.RememberMatch, account.EmailAddress);
+            try
+            {
+                config.Save();
+            }
+            catch (Exception ex)
+            {
+                ShowWarning($"The message opened, but the rule could not be saved to\r\n{AppConfig.FilePath}\r\n\r\n{ex.Message}");
+            }
         }
 
         // Asked only after the message is on its way: nothing should delay or
