@@ -54,7 +54,7 @@ internal static class Program
         ShowLastForward(config);
 
         // ShowDialog rather than Application.Run: a modeless form ignores
-        // DialogResult, so the Cancel button would do nothing.
+        // DialogResult, so closing from a button would do nothing.
         using var form = new SettingsForm(config, status, registrationError);
         form.ShowDialog();
         return 0;

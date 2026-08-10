@@ -3,11 +3,22 @@ using System.Windows.Forms;
 
 namespace MailtoPicker;
 
-/// <summary>Account list editor, shown when the app starts with no mailto: argument.</summary>
+/// <summary>
+/// Account list editor, shown when the app starts with no mailto: argument.
+///
+/// Every change is written to disk as it is made. There is no Save button and
+/// no working copy: the list on screen is the config. Rules were already saved
+/// this way, and the split was worse than either choice on its own, since
+/// removing an account deleted its rules from memory and only persisted them if
+/// Save happened to be pressed afterwards.
+///
+/// What guards against mistakes is confirmation, not a pending buffer: removing
+/// an account asks first and says what else goes with it, and everything else
+/// is trivially redone.
+/// </summary>
 internal sealed class SettingsForm : Form
 {
     private readonly AppConfig _config;
-    private readonly List<Account> _accounts;
     private readonly ListView _list = new();
 
     private readonly Button _add = new();
@@ -18,17 +29,17 @@ internal sealed class SettingsForm : Form
     private readonly Button _rules = new();
     private readonly Button _register = new();
     private readonly Button _unregister = new();
-    private readonly Button _save = new();
-    private readonly Button _cancel = new();
+    private readonly Button _close = new();
     private readonly Label _status = new();
 
     private readonly RegistrationStatus _registrationStatus;
     private readonly string? _registrationError;
 
+    private List<Account> Accounts => _config.Accounts;
+
     public SettingsForm(AppConfig config, RegistrationStatus status, string? registrationError)
     {
         _config = config;
-        _accounts = config.Accounts.Select(a => a.Clone()).ToList();
         _registrationStatus = status;
         _registrationError = registrationError;
 
@@ -63,17 +74,16 @@ internal sealed class SettingsForm : Form
 
         Place(_register, "Set as default mail handler...", 12, 300, 200, 28, OnRegister);
         Place(_unregister, "Unregister", 220, 300, 90, 28, OnUnregister);
-        Place(_save, "Save", 348, 300, 75, 28, OnSave);
 
-        _cancel.Text = "Cancel";
-        _cancel.SetBounds(429, 300, 75, 28);
-        _cancel.DialogResult = DialogResult.Cancel;
+        _close.Text = "Close";
+        _close.SetBounds(429, 300, 75, 28);
+        _close.DialogResult = DialogResult.OK;
 
         ClientSize = new Size(516, 340);
         Controls.AddRange(new Control[]
         {
             _list, _add, _edit, _remove, _up, _down, _rules,
-            _status, _register, _unregister, _save, _cancel,
+            _status, _register, _unregister, _close,
         });
 
         Text = "Mailto Picker settings";
@@ -81,13 +91,37 @@ internal sealed class SettingsForm : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
         MaximizeBox = false;
-        CancelButton = _cancel;
+        AcceptButton = _close;
+        CancelButton = _close;
 
         ResumeLayout(performLayout: false);
         PerformLayout();
 
         ShowStatus();
         Reload(0);
+    }
+
+    /// <summary>
+    /// Writes the config out. Called after every change rather than at the end,
+    /// so a failure is reported next to the change that caused it.
+    ///
+    /// A failed write leaves the screen ahead of the file. It is not rolled
+    /// back, because the config is written whole and the next successful change
+    /// will carry everything anyway.
+    /// </summary>
+    private void Persist()
+    {
+        try
+        {
+            _config.Save();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}\r\n\r\n" +
+                "The change is shown here but is not on disk yet.",
+                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     /// <summary>
@@ -161,7 +195,7 @@ internal sealed class SettingsForm : Form
     {
         _list.BeginUpdate();
         _list.Items.Clear();
-        foreach (Account account in _accounts)
+        foreach (Account account in Accounts)
         {
             var item = new ListViewItem(account.Name);
             item.SubItems.Add(account.EmailAddress);
@@ -169,9 +203,9 @@ internal sealed class SettingsForm : Form
         }
         _list.EndUpdate();
 
-        if (_accounts.Count > 0)
+        if (Accounts.Count > 0)
         {
-            int index = Math.Clamp(selectIndex, 0, _accounts.Count - 1);
+            int index = Math.Clamp(selectIndex, 0, Accounts.Count - 1);
             _list.Items[index].Selected = true;
             _list.Items[index].Focused = true;
         }
@@ -185,15 +219,17 @@ internal sealed class SettingsForm : Form
         int index = SelectedIndex;
         _edit.Enabled = _remove.Enabled = index >= 0;
         _up.Enabled = index > 0;
-        _down.Enabled = index >= 0 && index < _accounts.Count - 1;
+        _down.Enabled = index >= 0 && index < Accounts.Count - 1;
     }
 
     private void OnAdd(object? sender, EventArgs e)
     {
         using var dialog = new AccountDialog(null);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
-        _accounts.Add(dialog.Result);
-        Reload(_accounts.Count - 1);
+
+        Accounts.Add(dialog.Result);
+        Persist();
+        Reload(Accounts.Count - 1);
     }
 
     private void EditSelected()
@@ -201,12 +237,12 @@ internal sealed class SettingsForm : Form
         int index = SelectedIndex;
         if (index < 0) return;
 
-        using var dialog = new AccountDialog(_accounts[index]);
+        using var dialog = new AccountDialog(Accounts[index]);
         if (dialog.ShowDialog(this) != DialogResult.OK) return;
 
         // Rules point at accounts by address, so changing an account's address
         // would otherwise orphan every rule aiming at it.
-        string was = _accounts[index].EmailAddress;
+        string was = Accounts[index].EmailAddress;
         string now = dialog.Result.EmailAddress;
         if (!string.Equals(was, now, StringComparison.OrdinalIgnoreCase))
         {
@@ -217,7 +253,8 @@ internal sealed class SettingsForm : Form
             }
         }
 
-        _accounts[index] = dialog.Result;
+        Accounts[index] = dialog.Result;
+        Persist();
         Reload(index);
     }
 
@@ -226,7 +263,7 @@ internal sealed class SettingsForm : Form
         int index = SelectedIndex;
         if (index < 0) return;
 
-        if (_accounts.Count == 1)
+        if (Accounts.Count == 1)
         {
             MessageBox.Show(this,
                 "This is the only account. Add another before removing this one.",
@@ -236,13 +273,13 @@ internal sealed class SettingsForm : Form
 
         // A rule aiming at a removed account would sit there matching recipients
         // and resolving to nothing, so say what else is going and take it too.
-        string address = _accounts[index].EmailAddress;
+        string address = Accounts[index].EmailAddress;
         int rules = _config.Rules.Count(r =>
             string.Equals(r.EmailAddress, address, StringComparison.OrdinalIgnoreCase));
 
         string question = rules == 0
-            ? $"Remove \"{_accounts[index].Name}\"?"
-            : $"Remove \"{_accounts[index].Name}\"?\r\n\r\n" +
+            ? $"Remove \"{Accounts[index].Name}\"?"
+            : $"Remove \"{Accounts[index].Name}\"?\r\n\r\n" +
               $"{rules} rule{(rules == 1 ? "" : "s")} pointing at it will be removed too.";
 
         DialogResult answer = MessageBox.Show(this, question, "Mailto Picker",
@@ -251,7 +288,8 @@ internal sealed class SettingsForm : Form
 
         _config.Rules.RemoveAll(r =>
             string.Equals(r.EmailAddress, address, StringComparison.OrdinalIgnoreCase));
-        _accounts.RemoveAt(index);
+        Accounts.RemoveAt(index);
+        Persist();
         Reload(index);
     }
 
@@ -259,9 +297,10 @@ internal sealed class SettingsForm : Form
     {
         int index = SelectedIndex;
         int target = index + delta;
-        if (index < 0 || target < 0 || target >= _accounts.Count) return;
+        if (index < 0 || target < 0 || target >= Accounts.Count) return;
 
-        (_accounts[index], _accounts[target]) = (_accounts[target], _accounts[index]);
+        (Accounts[index], Accounts[target]) = (Accounts[target], Accounts[index]);
+        Persist();
         Reload(target);
     }
 
@@ -293,7 +332,7 @@ internal sealed class SettingsForm : Form
     /// <returns>False if the user declined, in which case there is nothing to do.</returns>
     private bool EnsureFirstAccount()
     {
-        if (_accounts.Count > 0) return true;
+        if (Accounts.Count > 0) return true;
 
         using (var dialog = new AccountDialog(null))
         {
@@ -306,23 +345,10 @@ internal sealed class SettingsForm : Form
                 return false;
             }
 
-            _accounts.Add(dialog.Result);
+            Accounts.Add(dialog.Result);
         }
 
-        // Committed straight away rather than left pending on the Save button:
-        // the user was made to create this, so it should not evaporate if they
-        // close the window.
-        _config.Accounts = _accounts.Select(a => a.Clone()).ToList();
-        try
-        {
-            _config.Save();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(this, $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-
+        Persist();
         Reload(0);
         return true;
     }
@@ -361,31 +387,5 @@ internal sealed class SettingsForm : Form
             MessageBox.Show(this, "Could not remove the registry entries:\r\n\r\n" + ex.Message,
                 "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-    }
-
-    private void OnSave(object? sender, EventArgs e)
-    {
-        if (_accounts.Count == 0)
-        {
-            MessageBox.Show(this, "Add at least one account before saving.", "Mailto Picker",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        _config.Accounts = _accounts.Select(a => a.Clone()).ToList();
-
-        try
-        {
-            _config.Save();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(this, $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return;
-        }
-
-        DialogResult = DialogResult.OK;
-        Close();
     }
 }

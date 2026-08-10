@@ -9,8 +9,7 @@ namespace MailtoPicker;
 /// so building an editor here would be a second, competing authoring path for
 /// the same thing.
 ///
-/// Changes are saved immediately rather than pending on the settings window's
-/// Save button, matching how rules are created in the first place.
+/// Like everywhere else, removals are written to disk as they are made.
 /// </summary>
 internal sealed class RulesDialog : Form
 {

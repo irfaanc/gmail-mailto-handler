@@ -188,6 +188,15 @@ rules aiming at it, and says how many before doing it.
 
 ## Config
 
+There is no Save button anywhere. Every change — accounts, rules, ordering — is
+written to disk the moment it is made, and closing a window never discards
+anything. What guards against mistakes is confirmation rather than a pending
+buffer: removing an account asks first and says which rules go with it.
+
+If a write fails, the app says so at the point of the change and leaves it on
+screen. The config is written whole, so the next successful change carries
+everything.
+
 `%AppData%\MailtoPicker\config.json`
 
 ```json
