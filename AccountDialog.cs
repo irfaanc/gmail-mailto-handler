@@ -6,6 +6,14 @@ namespace MailtoPicker;
 /// <summary>Add/edit dialog for a single account entry.</summary>
 internal sealed class AccountDialog : Form
 {
+    private const string SuggestedDomain = "gmail.com";
+
+    /// <summary>Guards against the completion re-entering its own TextChanged.</summary>
+    private bool _suggesting;
+
+    /// <summary>True while the current edit is a Backspace or Delete.</summary>
+    private bool _deleting;
+
     private readonly Label _nameLabel = new();
     private readonly TextBox _name = new();
     private readonly Label _emailLabel = new();
@@ -36,6 +44,11 @@ internal sealed class AccountDialog : Form
         _email.Text = existing?.EmailAddress ?? "";
         _email.SetBounds(12, 86, 336, 23);
 
+        // Wired after the initial text is set, so loading an existing account
+        // does not trigger a completion.
+        _email.KeyDown += (_, e) => _deleting = e.KeyCode is Keys.Back or Keys.Delete;
+        _email.TextChanged += (_, _) => SuggestDomain();
+
         _ok.Text = "OK";
         _ok.SetBounds(186, 122, 80, 27);
         _ok.DialogResult = DialogResult.OK;
@@ -59,6 +72,52 @@ internal sealed class AccountDialog : Form
 
         ResumeLayout(performLayout: false);
         PerformLayout();
+    }
+
+    /// <summary>
+    /// Fills in the rest of "gmail.com" as the user types the domain, leaving
+    /// the added part selected so the next keystroke replaces it. Typing along
+    /// with the suggestion keeps it (@g -> @g[mail.com]); typing anything else
+    /// drops it and leaves what was typed.
+    ///
+    /// Only a guess at the common case: Workspace accounts live on their own
+    /// domains, so this has to stay effortless to type straight past.
+    /// </summary>
+    private void SuggestDomain()
+    {
+        if (_suggesting) return;
+
+        // Never re-suggest what the user is trying to erase, or backspace could
+        // not get past the completion.
+        if (_deleting)
+        {
+            _deleting = false;
+            return;
+        }
+
+        string text = _email.Text;
+        int at = text.IndexOf('@');
+        if (at < 0) return;
+
+        // Only when typing at the very end. Editing mid-string should not append.
+        if (_email.SelectionStart != text.Length || _email.SelectionLength != 0) return;
+
+        string typed = text[(at + 1)..];
+        if (typed.Length >= SuggestedDomain.Length) return;
+        if (!SuggestedDomain.StartsWith(typed, StringComparison.OrdinalIgnoreCase)) return;
+
+        string rest = SuggestedDomain[typed.Length..];
+        _suggesting = true;
+        try
+        {
+            _email.Text = text + rest;
+            _email.SelectionStart = text.Length;
+            _email.SelectionLength = rest.Length;
+        }
+        finally
+        {
+            _suggesting = false;
+        }
     }
 
     private void OnOk(object? sender, EventArgs e)
