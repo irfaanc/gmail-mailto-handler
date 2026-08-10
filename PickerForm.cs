@@ -122,6 +122,7 @@ internal sealed class PickerForm : Form
         Controls.Add(_hint);
 
         Text = "Send with which account?";
+        AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
         MinimizeBox = false;

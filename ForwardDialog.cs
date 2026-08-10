@@ -65,6 +65,7 @@ internal sealed class ForwardDialog : Form
         Controls.AddRange(new Control[] { _what, _when, _resend, _deleteRule, _close });
 
         Text = "Mailto Picker";
+        AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
         MinimizeBox = false;

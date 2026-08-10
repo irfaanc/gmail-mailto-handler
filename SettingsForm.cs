@@ -77,6 +77,7 @@ internal sealed class SettingsForm : Form
         });
 
         Text = "Mailto Picker settings";
+        AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
         MaximizeBox = false;

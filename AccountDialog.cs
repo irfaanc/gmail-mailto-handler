@@ -62,6 +62,7 @@ internal sealed class AccountDialog : Form
         Controls.AddRange(new Control[] { _nameLabel, _name, _emailLabel, _email, _ok, _cancel });
 
         Text = existing is null ? "Add account" : "Edit account";
+        AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterParent;
         MinimizeBox = false;

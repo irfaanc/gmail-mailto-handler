@@ -12,9 +12,27 @@ Requires the .NET 8 SDK.
 dotnet publish MailtoPicker.csproj -c Release -o publish
 ```
 
-That produces `publish\MailtoPicker.exe`. Put the `publish` folder somewhere
-permanent before registering it: the registry entries point at the exact exe
-path, so moving it afterwards breaks the association.
+That produces a single `publish\MailtoPicker.exe` with everything bundled in.
+Copy that one file wherever you want it; nothing else needs to go with it.
+
+It is framework-dependent, so it still needs the **.NET 8 desktop runtime**
+installed. It is not self-contained, which would have made it around a hundred
+megabytes.
+
+Put it somewhere permanent before setting it as your handler. The registry
+entries name the exact path, and while the app repairs them when it finds the
+recorded exe missing, that repair only runs the next time you start it
+*directly* — a mail link cannot launch a path that is not there.
+
+If you move it while the old copy still exists, the app will not steal the
+registration from it (that guard stops a copy in a build folder hijacking your
+real install). To move deliberately: **Unregister** from the settings window,
+then run the copy in its new home.
+
+The icon is built from `ico\app.ico`, a seven-size icon generated from the PNGs
+in that folder. It is both embedded in the exe, which is what Explorer and the
+`DefaultIcon` registry entry use, and carried as a resource so the windows can
+show it.
 
 ## Use
 
@@ -209,6 +227,7 @@ than failing silently.
 | `Program.cs` | Entry point, argument handling, error dialogs |
 | `MailtoRequest.cs` | RFC 2368 parsing and Gmail compose URL building |
 | `EmailAddresses.cs` | Pulling a bare address out of a recipient field |
+| `AppIcon.cs` | Loading the embedded icon for the windows |
 | `Mail.cs` | Opening the Gmail compose window |
 | `Config.cs` | `config.json` load/save, rules and matching |
 | `RetryStore.cs` | The saved link of the last automatic forward |

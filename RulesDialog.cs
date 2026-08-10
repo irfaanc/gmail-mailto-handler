@@ -55,6 +55,7 @@ internal sealed class RulesDialog : Form
         Controls.AddRange(new Control[] { _list, _hint, _remove, _close });
 
         Text = "Sender rules";
+        AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterParent;
         MinimizeBox = false;

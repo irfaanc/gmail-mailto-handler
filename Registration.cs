@@ -45,8 +45,11 @@ internal static class Registration
         {
             string? path = Environment.ProcessPath;
             if (!string.IsNullOrEmpty(path)) return path;
-            // Fallback for odd hosting scenarios: the managed dll sits next to the apphost.
-            return Path.ChangeExtension(typeof(Registration).Assembly.Location, ".exe");
+
+            // Fallback for odd hosting scenarios. Not Assembly.Location, which
+            // is an empty string in a single-file app and would quietly put a
+            // bogus path into the registry.
+            return Path.Combine(AppContext.BaseDirectory, AppKeyName + ".exe");
         }
     }
 

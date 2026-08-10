@@ -14,6 +14,21 @@
     <Product>Mailto Picker</Product>
     <AssemblyTitle>Mailto Picker</AssemblyTitle>
 
+    <!-- Publish as one file. MailtoPicker.exe on its own is only the launcher:
+         the program lives in the .dll and the runtime version in the
+         .runtimeconfig.json, so copying just the exe produces a launcher that
+         fails before it can say anything, silently, because a WinExe has no
+         console to print to. Bundling removes the chance to copy it wrong.
+         Still framework-dependent, so it needs the .NET 8 desktop runtime. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- Embedded in the exe, which is also what the DefaultIcon registry entry
+         points at ("<exe>,0"), so Explorer, the taskbar and the Default apps
+         list all take it from the one place. -->
+    <ApplicationIcon>ico\app.ico</ApplicationIcon>
+
     <!-- Drives the generated ApplicationConfiguration.Initialize(). PerMonitorV2
          is what lets a window re-scale when dragged to a different-DPI monitor
          instead of being bitmap-stretched. -->
@@ -21,5 +36,12 @@
     <ApplicationVisualStyles>true</ApplicationVisualStyles>
     <ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Also carried as a resource so the windows can show it at whatever size
+         they need. Reading it back off disk would not survive single-file
+         publishing, where there is no file beside the exe to read. -->
+    <EmbeddedResource Include="ico\app.ico" LogicalName="MailtoPicker.app.ico" />
+  </ItemGroup>
 
 </Project>
