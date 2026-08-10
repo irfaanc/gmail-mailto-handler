@@ -50,11 +50,32 @@ internal sealed class Rule
     public Rule Clone() => new() { Kind = Kind, Match = Match, EmailAddress = EmailAddress };
 }
 
+/// <summary>
+/// What the app most recently did <em>without asking</em>. Exactly one is kept,
+/// not a history: the useful question is "what just happened that I did not
+/// choose", and once a picker has been shown nothing is unexplained any more.
+/// </summary>
+internal sealed class ForwardRecord
+{
+    public string Recipient { get; set; } = "";
+
+    /// <summary>The <see cref="Rule.Match"/> that fired.</summary>
+    public string MatchedRule { get; set; } = "";
+
+    /// <summary>Address of the account it was sent from.</summary>
+    public string SentFrom { get; set; } = "";
+
+    public DateTimeOffset When { get; set; }
+}
+
 internal sealed class AppConfig
 {
     public List<Account> Accounts { get; set; } = new();
 
     public List<Rule> Rules { get; set; } = new();
+
+    /// <summary>Set only while an automatic forward is still unexplained. See <see cref="ForwardRecord"/>.</summary>
+    public ForwardRecord? LastAutomaticForward { get; set; }
 
     [JsonIgnore]
     public static string DirectoryPath =>

@@ -1,21 +1,12 @@
 # Design: sender rules and automatic forwarding
 
-**Status: half built.**
+**Status: built.** Everything described here is implemented. The document is kept
+for the reasoning, particularly the rejected alternatives, so they do not get
+proposed and re-argued from scratch.
 
-| Part | State |
-| --- | --- |
-| Rules, precedence, creation from the picker | **built** |
-| Rules list with delete, in settings | **built** |
-| Reason line naming the rule that fired | **built** |
-| Global last-used removed | **built** |
-| Automatic forwarding (skipping the picker) | not built |
-| Shift override | not built |
-| The notification | not built |
-| Explanation record and retry payload | not built |
-
-Rules currently *preselect* an account. The picker still appears every time.
-Everything from "Automatic forwarding" onwards is still a design, and the
-reasoning below is kept so it can be picked up without rediscovering it.
+Two things below were reconsidered while building and are noted inline: there is
+no reason line when a rule *auto forwards* (the notice serves that purpose), and
+the retry payload is stored on disk rather than in the credential store.
 
 ## The problem
 
@@ -209,18 +200,17 @@ here.
 visible in the open Gmail tab. Rejected in favour of the better user flow: one
 button that resends everything to the correct account.
 
-## Open questions
+## Questions that were open, and how they were settled
 
-- **Which recipient is matched?** A mail link can carry several To addresses
-  across different domains. First To is the predictable answer, and automatic
-  forwarding lowers the stakes on getting it right, since a wrong pick is visible
-  and correctable. Still needs deciding explicitly.
-- **What happens when recipients span several domains** and the user asks to
-  remember the domain.
-- Whether the picker should show a reason line ("Work, rule
-  `*@company.com`") when a rule preselects rather than auto forwards.
-  With rules authored casually at send time, they are easy to forget, and this is
-  what keeps the behaviour debuggable.
+- **Which recipient is matched?** The first `To` address, falling back to the
+  first `Cc` then `Bcc`. Extraction anchors on the "@" and expands outwards
+  rather than splitting on commas, since a quoted display name can contain one.
+- **Recipients spanning several domains.** The remember box names its targets
+  ("Always use for company.com") rather than saying "this domain", so
+  which one a rule would be written for is visible before choosing.
+- **A reason line.** Built, but only where it is needed: when a rule *preselects*
+  and the picker is on screen. When a rule auto forwards there is no picker to
+  put it on, and the notice already says which rule fired.
 
 ## Config additions
 

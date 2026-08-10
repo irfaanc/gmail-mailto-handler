@@ -126,6 +126,39 @@ if there is no `To`. A link can carry several recipients across different
 domains, so this is a choice rather than a fact; the picker names the rule that
 fired, so a surprising highlight can be traced.
 
+### When a rule matches
+
+The picker does not appear. The message opens straight away in the account the
+rule names, and a small notice appears in the corner of the screen saying which
+account was used and which rule decided it.
+
+**Nothing is sent.** This opens a Gmail *compose window*, so a rule that fires
+wrongly leaves a draft in the wrong account, visible in the browser, with nothing
+delivered. That is what makes skipping the confirmation reasonable here.
+
+The notice never takes focus, so it will not interrupt whatever you are typing.
+It fades after a few seconds, or you can click it to see what happened and undo
+it.
+
+**Hold Shift while clicking a mail link** to force the picker anyway. Without
+that, a domain rule is a one way door: that domain would never show the picker
+again.
+
+### Undoing one
+
+Click the notice, or just run the app, and it shows the last thing it did without
+asking: who it went to, which account sent it, which rule decided, and when. From
+there you can send the same message again from a different account, or remove the
+rule.
+
+Only the most recent one is kept, and it is cleared once seen, superseded, or
+once you send anything manually, since at that point nothing is unexplained. If
+you miss one, the rule that caused it is still in the rules list.
+
+The original link is kept on disk in `last-forward.uri` so it can be re-sent. It
+holds the draft, so it is deleted as soon as it is used, viewed, superseded, or a
+week old, whichever comes first.
+
 ### Seeing and removing them
 
 **Rules...** in the settings window lists them, with a Remove button. There is no
@@ -176,8 +209,12 @@ than failing silently.
 | `Program.cs` | Entry point, argument handling, error dialogs |
 | `MailtoRequest.cs` | RFC 2368 parsing and Gmail compose URL building |
 | `EmailAddresses.cs` | Pulling a bare address out of a recipient field |
+| `Mail.cs` | Opening the Gmail compose window |
 | `Config.cs` | `config.json` load/save, rules and matching |
+| `RetryStore.cs` | The saved link of the last automatic forward |
 | `PickerForm.cs` | The account chooser, and where rules are created |
+| `ToastForm.cs` | The corner notice, which must never take focus |
+| `ForwardDialog.cs` | What happened, and how to undo it |
 | `SettingsForm.cs` | Account list editor |
 | `AccountDialog.cs` | Add/edit one account |
 | `RulesDialog.cs` | List and remove rules |
