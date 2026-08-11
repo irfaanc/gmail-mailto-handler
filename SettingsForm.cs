@@ -27,8 +27,7 @@ internal sealed class SettingsForm : Form
     private readonly Button _up = new();
     private readonly Button _down = new();
     private readonly Button _rules = new();
-    private readonly Button _register = new();
-    private readonly Button _unregister = new();
+    private readonly Button _handler = new();
     private readonly Button _close = new();
     private readonly Label _status = new();
 
@@ -72,8 +71,10 @@ internal sealed class SettingsForm : Form
         _status.AutoEllipsis = true;
         _status.SetBounds(12, 272, 492, 18);
 
-        Place(_register, "Set as default mail handler...", 12, 300, 200, 28, OnRegister);
-        Place(_unregister, "Unregister", 220, 300, 90, 28, OnUnregister);
+        // One control for one question: is this the mail handler or not. Its
+        // label carries the answer, so there is no second button to reason about
+        // and no state to infer from which of a pair looks enabled.
+        Place(_handler, "", 12, 300, 220, 28, OnToggleHandler);
 
         _close.Text = "Close";
         _close.SetBounds(429, 300, 75, 28);
@@ -83,7 +84,7 @@ internal sealed class SettingsForm : Form
         Controls.AddRange(new Control[]
         {
             _list, _add, _edit, _remove, _up, _down, _rules,
-            _status, _register, _unregister, _close,
+            _status, _handler, _close,
         });
 
         Text = "Mailto Picker settings";
@@ -132,6 +133,10 @@ internal sealed class SettingsForm : Form
     /// </summary>
     private void ShowStatus()
     {
+        _handler.Text = Registration.IsEffectiveHandler()
+            ? "Stop handling mail links"
+            : "Set as default mail handler...";
+
         if (_registrationStatus == RegistrationStatus.Failed)
         {
             Set("Could not write the registry entries. " + _registrationError, Color.Firebrick);
@@ -140,8 +145,11 @@ internal sealed class SettingsForm : Form
 
         if (!Registration.IsEffectiveHandler())
         {
-            Set("Windows is still sending mail links elsewhere. Use \"Set as default mail handler\".",
-                Color.Firebrick);
+            // Turned off on purpose is a settled state, not a problem to flag.
+            Set(_config.StoppedHandling
+                    ? "Not handling mail links."
+                    : "Windows is sending mail links elsewhere.",
+                _config.StoppedHandling ? SystemColors.GrayText : Color.Firebrick);
             return;
         }
 
@@ -321,8 +329,9 @@ internal sealed class SettingsForm : Form
 
         // Declining does not close the window: the user may well have opened
         // settings to manage accounts, and throwing them out over an unrelated
-        // question would make that impossible.
-        RegistrationPrompt.EnsureDefaultHandler(this);
+        // question would make that impossible. Never asked of someone who
+        // turned it off on purpose.
+        if (!_config.StoppedHandling) RegistrationPrompt.EnsureDefaultHandler(this);
         ShowStatus();
     }
 
@@ -360,33 +369,49 @@ internal sealed class SettingsForm : Form
         dialog.ShowDialog(this);
     }
 
-    private void OnRegister(object? sender, EventArgs e)
+    private void OnToggleHandler(object? sender, EventArgs e)
     {
-        RegistrationPrompt.EnsureDefaultHandler(this);
+        if (Registration.IsEffectiveHandler()) StopHandling();
+        else StartHandling();
+
         ShowStatus();
     }
 
-    private void OnUnregister(object? sender, EventArgs e)
+    private void StartHandling()
+    {
+        // Clear the opt-out first, or the registration this needs would be
+        // skipped as deliberately unwanted.
+        _config.StoppedHandling = false;
+        Persist();
+
+        Registration.Prepare(out _);
+
+        // Claim rather than EnsureDefaultHandler: the button's label already
+        // asked the question, so a confirmation here would just repeat it.
+        RegistrationPrompt.Claim(this);
+    }
+
+    private void StopHandling()
     {
         DialogResult answer = MessageBox.Show(this,
-            "Remove this app's mailto: registry entries?", "Mailto Picker",
-            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            "Stop Mailto Picker handling mail links?",
+            "Mailto Picker", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
-        try
+        if (!Registration.TryStopHandling(out string? error))
         {
-            Registration.Unregister();
-            ShowStatus();
-            MessageBox.Show(this,
-                "Registry entries removed.\r\n\r\n" +
-                "They will be written again the next time this app runs, since it " +
-                "registers itself on startup. Delete the app to be rid of it.",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(this, "Could not remove the registry entries:\r\n\r\n" + ex.Message,
+            MessageBox.Show(this, "Could not stop handling mail links:\r\n\r\n" + error,
                 "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
         }
+
+        // Recorded, or registering on the next launch would take the association
+        // straight back.
+        _config.StoppedHandling = true;
+        Persist();
+
+        // No confirmation dialog: the button flips to "Set as default mail
+        // handler" and the status line says so, which is the same news without
+        // something to dismiss.
     }
 }

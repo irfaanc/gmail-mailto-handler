@@ -77,6 +77,17 @@ internal sealed class AppConfig
     /// <summary>Set only while an automatic forward is still unexplained. See <see cref="ForwardRecord"/>.</summary>
     public ForwardRecord? LastAutomaticForward { get; set; }
 
+    /// <summary>
+    /// True once the user has deliberately stopped this app handling mail links.
+    ///
+    /// Needed because the app registers itself on every launch, which writes the
+    /// mailto class and would therefore re-take the association the moment it
+    /// next ran, quietly undoing the choice. It also stops the offer to become
+    /// the handler: nagging someone to re-enable what they just turned off is
+    /// different from nagging someone who never set it up.
+    /// </summary>
+    public bool StoppedHandling { get; set; }
+
     [JsonIgnore]
     public static string DirectoryPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MailtoPicker");

@@ -81,6 +81,17 @@ default mail handler** button does, and what the startup prompt offers whenever
 something else holds the association. The prompt names the incumbent, because
 this replaces the user's current mail app.
 
+That button is a toggle: once this app is the handler it reads **Stop handling
+mail links**, which clears the recorded choice and removes the registration. As
+with any app that gives up an association, Windows falls through to whatever is
+next rather than handing it back to whoever had it before — releasing an
+association is possible, assigning one is not.
+
+Stopping is remembered, because the app registers itself on every launch and
+would otherwise take the association straight back the next time it ran. While
+stopped it registers nothing and stops offering, until you set it as the handler
+again.
+
 Two caveats:
 
 - **It is not guaranteed to work.** UCPD, the User Choice Protection Driver,
@@ -310,10 +321,9 @@ All under `HKEY_CURRENT_USER`, no admin rights needed:
 - `Software\MailtoPicker\Capabilities` (+ `UrlAssociations\mailto`)
 - `Software\RegisteredApplications` → value `MailtoPicker`
 
-The **Unregister** button in settings removes all of them. Registering first
-stashes whatever `Software\Classes\mailto` held beforehand, and unregistering
-puts it back, so installing and removing this app leaves an existing handler
-untouched.
+**Stop handling mail links** removes all of them. Registering first stashes
+whatever `Software\Classes\mailto` held beforehand and stopping puts it back, so
+adding and removing this app leaves an existing handler untouched.
 
 It never *writes* the `UserChoice` key that decides the actual default, because
 it cannot: Windows validates that key against a hash it will not reproduce. It

@@ -46,7 +46,12 @@ internal static class Program
         AppConfig? config = LoadConfigOrExplain();
         if (config is null) return 3;
 
-        RegistrationStatus status = Registration.Prepare(out string? registrationError);
+        // Skipped entirely once the user has stopped: registering writes the
+        // mailto class, which would take the association straight back.
+        RegistrationStatus status = RegistrationStatus.Current;
+        string? registrationError = null;
+        if (!config.StoppedHandling) status = Registration.Prepare(out registrationError);
+
         RetryStore.SweepIfStale();
 
         // Launching the app directly is the other way in to "what did it just do
@@ -78,8 +83,9 @@ internal static class Program
 
         // Write or repoint the registry entries as needed. Deliberately quiet
         // and non-fatal: the user clicked a mail link, and nothing about the
-        // registry should interrupt or delay that.
-        Registration.Prepare(out _);
+        // registry should interrupt or delay that. Skipped once the user has
+        // stopped, since registering would take the association back.
+        if (!config.StoppedHandling) Registration.Prepare(out _);
 
         if (config.Accounts.Count == 0)
         {
@@ -143,8 +149,9 @@ internal static class Program
 
         // Asked only after the message is on its way: nothing should delay or
         // interrupt the thing the user actually clicked. Declining here simply
-        // ends the run, which is all that is left to do anyway.
-        RegistrationPrompt.EnsureDefaultHandler(null);
+        // ends the run, which is all that is left to do anyway. Never asked of
+        // someone who turned it off on purpose.
+        if (!config.StoppedHandling) RegistrationPrompt.EnsureDefaultHandler(null);
 
         return 0;
     }

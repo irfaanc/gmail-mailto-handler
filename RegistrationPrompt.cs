@@ -34,7 +34,16 @@ internal static class RegistrationPrompt
             "and this app never sees them.",
             MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
-        if (answer != DialogResult.Yes) return false;
+        return answer == DialogResult.Yes && Claim(owner);
+    }
+
+    /// <summary>
+    /// Takes the association, without asking first. Used by the settings button,
+    /// where the button's own label was the question.
+    /// </summary>
+    public static bool Claim(IWin32Window? owner)
+    {
+        if (Registration.IsEffectiveHandler()) return true;
 
         // The direct route: clear the recorded choice and let Windows fall
         // through to our class entry. Windows blocks this for some protocols on

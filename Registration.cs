@@ -100,6 +100,40 @@ internal static class Registration
         }
     }
 
+    /// <summary>
+    /// Steps aside: clears the recorded choice if it names this app, then removes
+    /// the registration entirely.
+    ///
+    /// This cannot hand the association back to whoever held it before, because
+    /// UserChoice can be deleted but never written. Windows simply falls through
+    /// to whatever is next, which is the same thing that happens to any file
+    /// association when the app holding it is uninstalled.
+    /// </summary>
+    /// <returns>False if anything still routes mail links here, having said why.</returns>
+    public static bool TryStopHandling(out string? error)
+    {
+        error = null;
+        try
+        {
+            // Only if it names this app. Another app's recorded choice is not
+            // ours to clear.
+            if (string.Equals(DefaultHandlerProgId(), ProgId, StringComparison.OrdinalIgnoreCase))
+                Registry.CurrentUser.DeleteSubKeyTree(UserChoicePath, throwOnMissingSubKey: false);
+
+            Unregister();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+
+        if (!IsEffectiveHandler()) return true;
+
+        error = "Windows is still routing mail links to this app.";
+        return false;
+    }
+
     public static void Unregister()
     {
         using (RegistryKey? registered = Registry.CurrentUser.OpenSubKey(@"Software\RegisteredApplications", true))
