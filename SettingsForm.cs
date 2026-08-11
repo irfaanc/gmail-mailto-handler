@@ -149,7 +149,8 @@ internal sealed class SettingsForm : Form
         {
             RegistrationStatus.Created => " Registry entries were just created.",
             RegistrationStatus.Repaired => " The stored path was stale and now points at this copy.",
-            RegistrationStatus.OtherCopy => $" Registered to another copy: {Registration.RegisteredExePath()}",
+            RegistrationStatus.TakenOver =>
+                $" This copy has taken over from {Registration.PreviousExePath}, which can now be deleted.",
             _ => "",
         };
 

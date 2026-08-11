@@ -19,15 +19,20 @@ It is framework-dependent, so it still needs the **.NET 8 desktop runtime**
 installed. It is not self-contained, which would have made it around a hundred
 megabytes.
 
-Put it somewhere permanent before setting it as your handler. The registry
-entries name the exact path, and while the app repairs them when it finds the
-recorded exe missing, that repair only runs the next time you start it
-*directly* — a mail link cannot launch a path that is not there.
+You can move it whenever you like. The registry entries name the exact path, but
+the app repoints them at itself whenever the copy being run is not the one on
+record — last one run wins. So after moving it, start it once from its new home
+and mail links follow.
 
-If you move it while the old copy still exists, the app will not steal the
-registration from it (that guard stops a copy in a build folder hijacking your
-real install). To move deliberately: **Unregister** from the settings window,
-then run the copy in its new home.
+The one thing to know: that repair happens when the app *starts*, so it only
+runs if you start it directly. A mail link cannot launch a path that is not
+there, and so cannot trigger the repair itself.
+
+This does mean running a copy out of a build folder takes the registration too.
+That is the deliberate trade: it is obvious, it is undone by next starting the
+real copy, and the alternative failure — moving the app and having mail links
+silently keep going to the old location — gives no signal at all. When a takeover
+happens the settings window says so and names the copy that has been orphaned.
 
 The icon is built from `ico\app.ico`, a seven-size icon generated from the PNGs
 in that folder. It is both embedded in the exe, which is what Explorer and the
@@ -259,21 +264,22 @@ Because a mailto link can no longer launch a missing exe, the repair usually
 happens the next time you start the app directly — open it once from its new
 home and links start working again.
 
-Three deliberate limits on when it fires:
+Two things bound it:
 
-- **Only if you already registered.** An app that was never registered stays
-  unregistered; it will not quietly add itself on first run.
-- **Only if the registered exe is gone from disk**, not merely different from
-  the running one. A path that still resolves is a working registration for
-  another copy, and running a build-output copy must not silently steal it. Click
-  Register to move it deliberately.
+- **Whichever copy you last started wins.** It repoints on any difference, not
+  only when the recorded exe has gone missing, so moving the app needs nothing
+  but starting it once in its new home. The cost is that a copy run out of a
+  build folder takes the registration too; that is loud, and undone by next
+  starting the real copy, whereas a move that silently kept routing to the old
+  location would give no signal at all.
 - **Never over another app's handler.** `Software\Classes\mailto` is rewritten
   only while it still names this app. The app's own ProgID is always safe to fix,
   and it is the one that matters: when you have selected this app in Default
   apps, Windows stores the ProgID *name* and resolves the exe through that key.
 
-The settings window shows the current state in a line above the buttons, so a
-repair is visible rather than silent.
+The settings window shows the current state in a line above the buttons, and
+names the copy that has been orphaned when a takeover happens, so none of this
+is silent.
 
 ## Note on the forms
 

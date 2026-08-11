@@ -15,8 +15,12 @@ internal enum RegistrationStatus
     /// <summary>The registered exe was gone, so the entries now point here.</summary>
     Repaired,
 
-    /// <summary>Registered to a different copy that still exists. Left alone.</summary>
-    OtherCopy,
+    /// <summary>
+    /// The registration named another copy that still exists, and this one has
+    /// taken it over. Worth distinguishing from <see cref="Repaired"/> only so
+    /// it can be reported: the other copy is now orphaned.
+    /// </summary>
+    TakenOver,
 
     /// <summary>The entries could not be written.</summary>
     Failed,
@@ -199,6 +203,14 @@ internal static class Registration
     private const string UserChoicePath =
         @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\mailto\UserChoice";
 
+    /// <summary>
+    /// Where the registration pointed before this run took it over, when that
+    /// copy still exists. Only meaningful alongside
+    /// <see cref="RegistrationStatus.TakenOver"/>, and only so the settings
+    /// window can name the copy that has just been orphaned.
+    /// </summary>
+    public static string? PreviousExePath { get; private set; }
+
     /// <summary>The ProgID Windows is currently routing mailto to, if any.</summary>
     public static string? DefaultHandlerProgId()
     {
@@ -290,10 +302,19 @@ internal static class Registration
             if (string.Equals(registeredExe, ExePath, StringComparison.OrdinalIgnoreCase))
                 return RegistrationStatus.Current;
 
-            if (File.Exists(registeredExe))
-                return RegistrationStatus.OtherCopy;
+            // The registration names a different location, so the copy being run
+            // now takes it over. Whether the old path still exists changes only
+            // what gets reported, not what happens: "I moved the app and mail
+            // links silently kept going to the old one" is a confusing failure
+            // with no signal, while a build-output copy taking the registration
+            // is both obvious and undone by next running the real one.
+            bool replacingALiveCopy = File.Exists(registeredExe);
+            PreviousExePath = replacingALiveCopy ? registeredExe : null;
 
-            return Repair(out error);
+            RegistrationStatus outcome = Repair(out error);
+            if (outcome != RegistrationStatus.Repaired) return outcome;
+
+            return replacingALiveCopy ? RegistrationStatus.TakenOver : RegistrationStatus.Repaired;
         }
         catch (Exception ex)
         {
