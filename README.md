@@ -19,25 +19,11 @@ It is framework-dependent, so it still needs the **.NET 8 desktop runtime**
 installed. It is not self-contained, which would have made it around a hundred
 megabytes.
 
-You can move it whenever you like. The registry entries name the exact path, but
-the app repoints them at itself whenever the copy being run is not the one on
-record — last one run wins. So after moving it, start it once from its new home
-and mail links follow.
+Move it wherever you like afterwards; see [If you move the app](#if-you-move-the-app).
 
-The one thing to know: that repair happens when the app *starts*, so it only
-runs if you start it directly. A mail link cannot launch a path that is not
-there, and so cannot trigger the repair itself.
-
-This does mean running a copy out of a build folder takes the registration too.
-That is the deliberate trade: it is obvious, it is undone by next starting the
-real copy, and the alternative failure — moving the app and having mail links
-silently keep going to the old location — gives no signal at all. When a takeover
-happens the settings window says so and names the copy that has been orphaned.
-
-The icon is built from `ico\app.ico`, a seven-size icon generated from the PNGs
-in that folder. It is both embedded in the exe, which is what Explorer and the
-`DefaultIcon` registry entry use, and carried as a resource so the windows can
-show it.
+The icon comes from `ico\app.ico`, a seven-size icon built from the PNGs in that
+folder. It is embedded in the exe, which is what Explorer and the `DefaultIcon`
+registry entry use, and also carried as a resource so the windows can show it.
 
 ## Use
 
@@ -112,7 +98,10 @@ The offer repeats on every launch while the app is not the handler. Handling
 mail links is the only thing it does, so remembering a "no" would leave a
 permanently useless app on the machine.
 
-When a `mailto:` link is clicked, the picker appears:
+## The picker
+
+Clicking a `mailto:` link brings up the picker, unless a rule matches the
+recipient — see [Rules](#rules).
 
 - **Enter**, or clicking the highlighted row, opens Gmail immediately.
 - Clicking a different row selects it; click again (or press Enter) to send.
@@ -257,12 +246,13 @@ than failing silently.
 ## If you move the app
 
 Every registry entry stores an absolute path, so moving or renaming the folder
-breaks the association. The app repairs that itself: on each launch it compares
-the registered path against the running exe and rewrites the entries if needed.
+would break the association. The app repairs that itself: on each start it
+compares the registered path against the exe actually running and rewrites the
+entries if they differ.
 
-Because a mailto link can no longer launch a missing exe, the repair usually
-happens the next time you start the app directly — open it once from its new
-home and links start working again.
+So moving it needs nothing but starting it once in its new home. Note that the
+repair happens on *start*, and a mail link cannot launch a path that is not
+there — so a link cannot trigger the repair, you have to open the app yourself.
 
 Two things bound it:
 
@@ -323,5 +313,14 @@ All under `HKEY_CURRENT_USER`, no admin rights needed:
 The **Unregister** button in settings removes all of them. Registering first
 stashes whatever `Software\Classes\mailto` held beforehand, and unregistering
 puts it back, so installing and removing this app leaves an existing handler
-untouched. It never writes the `UserChoice` key that decides the actual default
-— Windows blocks that at the driver level, and trying would be pointless.
+untouched.
+
+It never *writes* the `UserChoice` key that decides the actual default, because
+it cannot: Windows validates that key against a hash it will not reproduce. It
+does **delete** it, which is what "Set as default mail handler" does, and is only
+possible where UCPD does not cover the protocol. See
+[Becoming the mail handler](#becoming-the-mail-handler).
+
+One more file, outside the registry: `%AppData%\MailtoPicker\last-forward.uri`,
+holding the link of the last automatic forward so it can be re-sent. It is
+deleted as soon as it is used, seen, superseded, or a week old.
