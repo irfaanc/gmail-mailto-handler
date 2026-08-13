@@ -185,7 +185,7 @@ specificity.
 rule firing would update last-used, so a work domain match would silently change
 the default for the next unrelated personal message. Removing it removes that
 coupling, and leaves account list order as the single, visible lever. Note this
-reverses commit `28e624d`, which introduced `LastUsedAddress`; that field and its
+reverses commit `0e17381`, which introduced `LastUsedAddress`; that field and its
 handling would come out.
 
 **Windows Credential Manager for the retry payload.** Rejected. `CredRead` returns
