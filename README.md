@@ -4,6 +4,8 @@ A small Windows utility that intercepts `mailto:` links, asks which Gmail accoun
 you want to send from, and opens Gmail's compose window in your default browser.
 No tray icon, no background service: it starts, does one job, exits.
 
+It supports any Gmail hosted email account, not just @gmail.
+
 Teach it a rule — *anything at this domain goes from my work account* — and it
 stops asking for those and just opens them.
 
