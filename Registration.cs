@@ -63,12 +63,25 @@ internal static class Registration
 
     /// <summary>
     /// True if a registered command line belongs to this app rather than some
-    /// other handler. Matched on the exe's file name, not its full path, so a
-    /// registration left behind by a copy that has since moved is still
-    /// recognised as ours.
+    /// other handler.
+    ///
+    /// Matched on the file name rather than the full path, so a registration
+    /// left by a copy that has since moved is still recognised as ours, and by
+    /// prefix rather than exactly, so the x86 and x64 builds recognise each
+    /// other. They ship under different names, and without this, replacing one
+    /// with the other would leave the shared mailto class pointing at an exe
+    /// that is no longer there.
+    ///
+    /// The prefix is tested against the file name alone, so a stray folder
+    /// named after this app cannot make someone else's handler look like ours.
     /// </summary>
-    private static bool ReferencesThisApp(string command) =>
-        command.Contains(Path.GetFileName(ExePath), StringComparison.OrdinalIgnoreCase);
+    private static bool ReferencesThisApp(string command)
+    {
+        string? exe = ExtractExePath(command);
+        return exe is not null &&
+               Path.GetFileNameWithoutExtension(exe)
+                   .StartsWith(AppKeyName, StringComparison.OrdinalIgnoreCase);
+    }
 
     public static void Register()
     {

@@ -22,7 +22,13 @@
          Still framework-dependent, so it needs the .NET 8 desktop runtime. -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- x86 by default, which is the build that runs everywhere: natively on
+         32-bit Windows, under WOW64 on 64-bit, and under emulation on ARM64
+         including Windows 10, where x64 emulation does not exist. Pass
+         -r win-x64 for the 64-bit build. Single-file publishing requires some
+         RuntimeIdentifier, so one has to be the default. -->
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
 
     <!-- Embedded in the exe, which is also what the DefaultIcon registry entry
          points at ("<exe>,0"), so Explorer, the taskbar and the Default apps

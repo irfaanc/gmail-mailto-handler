@@ -4,61 +4,51 @@ A small Windows utility that intercepts `mailto:` links, asks which Gmail accoun
 you want to send from, and opens Gmail's compose window in your default browser.
 No tray icon, no background service: it starts, does one job, exits.
 
-Once you teach it a rule — *anything at this domain goes from my work account* —
-it stops asking for those and just opens them.
+Teach it a rule — *anything at this domain goes from my work account* — and it
+stops asking for those and just opens them.
 
-- [Build](#build)
-- [Setting up](#setting-up)
-- [The picker](#the-picker)
-- [Rules](#rules)
-- [Config](#config)
-- [Moving the app](#moving-the-app)
-- [Files](#files)
-- [Licence](#licence)
+## Quick start
 
-Two companion documents: [DESIGN.md](DESIGN.md) for why the app behaves as it
-does, and [PLATFORM-NOTES.md](PLATFORM-NOTES.md) for what had to be learned about
-Windows and Gmail to make it work.
+**1. Download it.** One file, from the
+[latest release](../../releases/latest):
 
-## Build
+| file | for |
+| --- | --- |
+| `MailtoPicker.exe` | anything — 32-bit, 64-bit, or ARM |
+| `MailtoPicker-x64.exe` | 64-bit Windows, if you already have 64-bit .NET |
 
-Requires the .NET 8 SDK.
+Either works on a normal 64-bit machine. The first is 32-bit and runs everywhere
+Windows does; the second avoids a second runtime download if you already have the
+64-bit .NET installed. If you have no idea, take the first.
 
-```bash
-dotnet publish MailtoPicker.csproj -c Release -o publish
-```
+**2. Put it somewhere permanent.** It registers the path it is run from, so pick
+its final home now — `%LocalAppData%\Programs\MailtoPicker\` is a good spot and
+needs no admin rights. Moving it later is fine, you just have to start it once
+from the new location.
 
-That produces a single `publish\MailtoPicker.exe`. Copy that one file wherever
-you want it; nothing else goes with it.
+**3. Run it.** Windows will say **"Windows protected your PC"**, because the file
+is not code-signed. Click **More info**, then **Run anyway**. That prompt is
+expected — signing requires a certificate this project does not have.
 
-It needs the **.NET 8 desktop runtime** installed. It is not self-contained,
-which would have made it around a hundred megabytes for a mailto shim.
+**4. Add an account.** It asks straight away. Give it a name and the Gmail
+address to send from.
 
-The icon is `ico\app.ico`, seven sizes built from the PNGs beside it.
+**5. Say yes to becoming the mail handler.** It offers as soon as the account
+exists. Two dialogs in a row on a first run is normal.
 
-## Setting up
+That is setup finished. Clicking a `mailto:` link anywhere now brings up the
+picker.
 
-Run `MailtoPicker.exe` with no arguments. On a first run it asks for an account
-straight away rather than inventing one. Each account has:
+### Requirements
 
-- **Display name** — anything you like; this is what the picker lists.
-- **Gmail address** — the account to send from.
+**Windows 10 or 11**, and the **.NET Desktop Runtime 8**.
 
-Then use **Set as default mail handler**, which is usually all it takes. If
-Windows refuses, the app walks you through doing it by hand; the route that works
-is Settings > Apps > Default apps, typing `MAILTO` into *"Set a default for a
-file type or link type"*, and using the `MAILTO` row that appears. The
-application list further down that page is the intuitive place to look and the
-wrong one.
-
-That button is a toggle. Once the app is the handler it reads **Stop handling
-mail links**, which releases the association and removes its registry entries.
-Windows then falls through to whatever is next — as with any app that gives up an
-association, it cannot be handed back to whoever held it before.
-
-While the app is not the handler it offers to become one on every launch, since
-that is the only thing it does. Stopping deliberately is remembered, and it stops
-asking.
+You do not have to check for the runtime first. If it is missing, running the app
+produces a Windows dialog with a **Download it now** button that fetches the
+right version for your machine. Install it up front from
+[dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0) if you
+would rather — it is the *Desktop Runtime* you want, not the SDK and not the
+ASP.NET Core runtime.
 
 ## The picker
 
@@ -125,6 +115,17 @@ there: the picker already does both.
 Editing an account's address repoints its rules. Deleting an account deletes the
 rules aiming at it, and says how many first.
 
+## Settings
+
+Run `MailtoPicker.exe` with no arguments. Accounts can be added, edited,
+reordered and removed, and the button at the bottom toggles between **Set as
+default mail handler** and **Stop handling mail links** depending on which state
+you are in.
+
+Stopping releases the association and removes the app's registry entries.
+Windows then falls through to whatever is next — as with any app that gives up an
+association, it cannot be handed back to whoever held it before.
+
 ## Config
 
 `%AppData%\MailtoPicker\config.json`
@@ -165,7 +166,8 @@ cannot launch a path that is not there, and so cannot trigger it.
 
 This does mean running a copy out of a build folder takes the registration too.
 When that happens the settings window says so and names the copy that has been
-orphaned.
+orphaned. Swapping the x86 build for the x64 one, or the reverse, works the same
+way: start the new one once.
 
 ### Registry keys
 
@@ -180,6 +182,24 @@ All under `HKEY_CURRENT_USER`, no admin rights needed:
 **Stop handling mail links** removes all of them. Registering stashes whatever
 `Software\Classes\mailto` held beforehand and stopping puts it back, so adding
 and removing this app leaves an existing handler untouched.
+
+## Build
+
+Requires the .NET 8 SDK.
+
+```bash
+dotnet publish MailtoPicker.csproj -c Release -o publish
+dotnet publish MailtoPicker.csproj -c Release -r win-x64 -o publish-x64
+```
+
+The first is the x86 build that runs everywhere; the second is the 64-bit one.
+Each produces a single self-contained-looking `MailtoPicker.exe` with everything
+bundled in — copy that one file, nothing goes with it.
+
+Neither is actually self-contained: both need the .NET Desktop Runtime, which is
+why they are around 290 KB rather than 150 MB.
+
+The icon is `ico\app.ico`, seven sizes built from the PNGs beside it.
 
 ## Files
 
@@ -204,6 +224,10 @@ and removing this app leaves an existing handler untouched.
 The forms are hand-written, with no `.Designer.cs` files, but follow the shape
 the designer emits because WinForms depends on it — see
 [PLATFORM-NOTES.md](PLATFORM-NOTES.md#winforms) before changing any layout code.
+
+Two companion documents: [DESIGN.md](DESIGN.md) for why the app behaves as it
+does, and [PLATFORM-NOTES.md](PLATFORM-NOTES.md) for what had to be learned about
+Windows and Gmail to make it work.
 
 ## Licence
 
