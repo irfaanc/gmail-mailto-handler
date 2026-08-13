@@ -36,7 +36,7 @@ address to send from.
 **5. Say yes to becoming the mail handler.** It offers as soon as the account
 exists. Two dialogs in a row on a first run is normal.
 
-That is setup finished. Clicking a `mailto:` link anywhere now brings up the
+And that's it. Clicking a `mailto:` link anywhere now brings up the
 picker.
 
 ### Requirements
