@@ -14,6 +14,7 @@ it stops asking for those and just opens them.
 - [Config](#config)
 - [Moving the app](#moving-the-app)
 - [Files](#files)
+- [Licence](#licence)
 
 Two companion documents: [DESIGN.md](DESIGN.md) for why the app behaves as it
 does, and [PLATFORM-NOTES.md](PLATFORM-NOTES.md) for what had to be learned about
@@ -203,3 +204,10 @@ and removing this app leaves an existing handler untouched.
 The forms are hand-written, with no `.Designer.cs` files, but follow the shape
 the designer emits because WinForms depends on it — see
 [PLATFORM-NOTES.md](PLATFORM-NOTES.md#winforms) before changing any layout code.
+
+## Licence
+
+[BSD 3-Clause](LICENSE).
+
+The paper plane icon in `ico\` is original to this project and covered by the
+same licence.
