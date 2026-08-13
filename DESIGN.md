@@ -8,6 +8,11 @@ Two things below were reconsidered while building and are noted inline: there is
 no reason line when a rule *auto forwards* (the notice serves that purpose), and
 the retry payload is stored on disk rather than in the credential store.
 
+This file holds *decisions about this app*. Facts about Windows, WinForms and
+Gmail — including the evidence for the ones cited below — live in
+[PLATFORM-NOTES.md](PLATFORM-NOTES.md). How to use the app is in
+[README.md](README.md).
+
 ## The problem
 
 Choosing which account sends is currently a manual act on every mail link. In
