@@ -6,7 +6,7 @@ No tray icon, no background service: it starts, does one job, exits.
 
 It supports any Gmail hosted email account, not just @gmail.
 
-Teach it a rule — *anything at this domain goes from my work account* — and it
+Teach it a rule (ex: *anything at this domain goes from my work account*) and it
 stops asking for those and just opens them.
 
 ## Quick start
