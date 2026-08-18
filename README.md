@@ -233,7 +233,7 @@ Windows and Gmail to make it work.
 
 ## Licence
 
-[BSD 3-Clause](LICENSE).
+[MIT](LICENSE).
 
 The paper plane icon in `ico\` is original to this project and covered by the
 same licence.
