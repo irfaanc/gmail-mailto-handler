@@ -205,6 +205,29 @@ here.
 visible in the open Gmail tab. Rejected in favour of the better user flow: one
 button that resends everything to the correct account.
 
+**Outlook web and Yahoo as additional providers.** Rejected, and not because of
+the compose URLs, which are the easy part. The obstacle is account selection.
+Gmail's `authuser` names a mailbox by address, which is the single property this
+app is built on and the reason `Account.EmailAddress` replaced Gmail's `/u/N/`
+index. Nothing equivalent exists elsewhere: Outlook personal takes a positional
+slot, which is exactly the failure mode that index was dropped for; Outlook for
+work or school has no per-address selector in the compose deeplink at all; and
+Yahoo composes as whoever happens to be signed in. For every non-Gmail account,
+"which account does this send from" degrades to "whichever the browser is
+already signed into".
+
+That matters most where the app acts alone. Automatic forwarding is defensible
+because the sender is deterministic, so the notice afterwards can state which
+account was used as fact. Under a provider with no address selector the notice
+would be asserting something the app cannot know, which is worse than not
+having the feature.
+
+The specific compose URLs are deliberately not recorded here or in the platform
+notes, because none of them have been tested and a plausible guess at this kind
+of parameter has already been wrong once. Revisiting means live accounts of each
+type and, for each, composing while signed in as the *wrong* account, since that
+is the case that decides whether the feature can be honest.
+
 ## Questions that were open, and how they were settled
 
 - **Which recipient is matched?** The first `To` address, falling back to the
