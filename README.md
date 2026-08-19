@@ -1,33 +1,34 @@
 # gmail:to
 
-A small Windows utility that intercepts `mailto:` links, asks which Gmail account
-you want to send from, and opens Gmail's compose window in your default browser.
-No tray icon, no background service: it starts, does one job, exits.
+A small Windows utility that accepts your `mailto:` links, asks which Gmail
+account you want to send from, and opens Gmail's compose window in your default
+browser, in the right email account. No tray icon, no background service: it
+starts, does one job, exits.
 
 It supports any Gmail hosted email account, not just @gmail.
 
-Teach it a rule (ex: *anything at this domain goes from my work account*) and it
-stops asking for those and just opens them.
+Teach it what account to route your email to (ex: *anything at this domain goes
+from my work account*), and it will do it automatically! Without scripting, or
+hand-edited configuration files.
 
 ## Why
 
 Click a mail link on Windows and it opens whatever Windows picked years ago,
 usually Outlook, whether or not you have ever used it.
 
-Pointing it at Gmail instead is the obvious fix, and it works until you have a
-second account. Gmail's own handler carries no account selector: it resolves to
-`/mail/u/0/`, the first mailbox signed into that browser profile, and composes
-there without asking. Slot numbers also shift as accounts are signed in and out,
-so the mailbox it picks today is not necessarily the one it picks tomorrow.
+Pointing it at Gmail instead is the obvious fix, and it works... until you have a
+second account. Gmail's own handler doesn't understand multiple gmail accounts:
+it just sends everything to the first mailbox signed into that browser profile,
+and composes there without asking. And as you sign in and out of email accounts,
+who knows what account it's going to pick to send from next time.
 
 The message goes from the wrong address, and you find out after sending, if at
-all. This app puts the choice back in front of you, and names the mailbox by
-address rather than by position, so the account you pick is the account that
-composes.
+all. This app puts the choice back in front of you: named mailboxes you pick, so
+the right account can send the right email.
 
 Service wrapper clients like [Ferdium](https://ferdium.org/) are one common route
-to this, since they host Gmail in a desktop window but cannot route a mail link
-to a particular service. The underlying problem is the same with or without one.
+to this. They host Gmail in a desktop window but cannot route a mail link to a
+particular account. It's a frustrating mess. But not anymore!
 
 ## Quick start
 
