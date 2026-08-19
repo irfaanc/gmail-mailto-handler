@@ -9,6 +9,26 @@ It supports any Gmail hosted email account, not just @gmail.
 Teach it a rule (ex: *anything at this domain goes from my work account*) and it
 stops asking for those and just opens them.
 
+## Why
+
+Click a mail link on Windows and it opens whatever Windows picked years ago,
+usually Outlook, whether or not you have ever used it.
+
+Pointing it at Gmail instead is the obvious fix, and it works until you have a
+second account. Gmail's own handler carries no account selector: it resolves to
+`/mail/u/0/`, the first mailbox signed into that browser profile, and composes
+there without asking. Slot numbers also shift as accounts are signed in and out,
+so the mailbox it picks today is not necessarily the one it picks tomorrow.
+
+The message goes from the wrong address, and you find out after sending, if at
+all. This app puts the choice back in front of you, and names the mailbox by
+address rather than by position, so the account you pick is the account that
+composes.
+
+Service wrapper clients like [Ferdium](https://ferdium.org/) are one common route
+to this, since they host Gmail in a desktop window but cannot route a mail link
+to a particular service. The underlying problem is the same with or without one.
+
 ## Quick start
 
 **1. Download it.** One file, from the
