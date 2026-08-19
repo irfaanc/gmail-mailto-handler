@@ -15,8 +15,8 @@
     <AssemblyTitle>gmail:to</AssemblyTitle>
     <Company>Irfaan Chaudhry</Company>
     <Copyright>Copyright (c) 2026 Irfaan Chaudhry</Copyright>
-    <PackageProjectUrl>https://github.com/irfaanc/gmail-mailto-handler</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/irfaanc/gmail-mailto-handler</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/irfaanc/gmailto</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/irfaanc/gmailto</RepositoryUrl>
 
     <!-- Publish as one file. GmailTo.exe on its own is only the launcher:
          the program lives in the .dll and the runtime version in the

@@ -192,7 +192,7 @@ internal sealed class SettingsForm : Form
     }
 
     /// <summary>Where this came from, for anyone who finds the exe and nothing else.</summary>
-    private const string ProjectUrl = "https://github.com/irfaanc/gmail-mailto-handler";
+    private const string ProjectUrl = "https://github.com/irfaanc/gmailto";
 
     /// <summary>
     /// Name and version for the link. The informational version carries the
