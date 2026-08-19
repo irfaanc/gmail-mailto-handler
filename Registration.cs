@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Microsoft.Win32;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>Outcome of the startup pass that keeps the registry entries honest.</summary>
 internal enum RegistrationStatus
@@ -34,10 +34,10 @@ internal enum RegistrationStatus
 /// </summary>
 internal static class Registration
 {
-    public const string AppKeyName = "MailtoPicker";
-    public const string DisplayName = "Mailto Picker";
+    public const string AppKeyName = "GmailTo";
+    public const string DisplayName = "gmail:to";
     public const string Description = "Choose which Gmail account opens a mailto: link.";
-    public const string ProgId = "MailtoPicker.Url.Mailto";
+    public const string ProgId = "GmailTo.Url.Mailto";
 
     private const string CapabilitiesPath = @"Software\" + AppKeyName + @"\Capabilities";
     private const string BackupPath = @"Software\" + AppKeyName + @"\PreviousMailtoHandler";
@@ -457,7 +457,7 @@ internal static class Registration
     /// <summary>
     /// Opens Settings > Apps > Default apps.
     ///
-    /// No deep link: "?registeredAppUser=MailtoPicker" was tried and Windows 11
+    /// No deep link: "?registeredAppUser=GmailTo" was tried and Windows 11
     /// ignores the parameter, landing on the same generic page. The walkthrough
     /// text carries the directions instead.
     /// </summary>

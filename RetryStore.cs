@@ -1,4 +1,4 @@
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// Holds the original mailto: link of the last automatic forward, so it can be

@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>Add/edit dialog for a single account entry.</summary>
 internal sealed class AccountDialog : Form
@@ -151,7 +151,7 @@ internal sealed class AccountDialog : Form
 
     private void Reject(string message, Control focus)
     {
-        MessageBox.Show(this, message, "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        MessageBox.Show(this, message, "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         DialogResult = DialogResult.None;
         focus.Focus();
     }

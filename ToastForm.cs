@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// A small notice in the corner of the screen saying which account a mail link

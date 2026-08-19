@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 internal static class Program
 {
-    private const string Title = "Mailto Picker";
+    private const string Title = "gmail:to";
 
     [STAThread]
     private static int Main(string[] args)
@@ -111,7 +111,7 @@ internal static class Program
             // thing it cannot infer. Said that way when an install just
             // happened, and as a plain gap otherwise.
             ShowWarning(SelfInstall.JustInstalled
-                ? "Mailto Picker installed itself to\r\n" + SelfInstall.InstalledDirectory +
+                ? "Installed to\r\n" + SelfInstall.InstalledDirectory +
                   "\r\n\r\nOne step left: the account to send from. The window that opens " +
                   "next asks for it, then this message will carry on."
                 : "No accounts are configured yet, so there is nowhere to send this.\r\n\r\n" +

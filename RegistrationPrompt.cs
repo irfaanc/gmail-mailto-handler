@@ -1,6 +1,6 @@
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// The user-facing half of registration. Kept apart from
@@ -13,7 +13,7 @@ namespace MailtoPicker;
 /// </summary>
 internal static class RegistrationPrompt
 {
-    private const string Title = "Mailto Picker";
+    private const string Title = "gmail:to";
 
     /// <summary>
     /// Checks whether Windows is routing mail links here, and walks the user
@@ -27,9 +27,9 @@ internal static class RegistrationPrompt
         if (Registration.IsEffectiveHandler()) return true;
 
         DialogResult answer = Show(owner,
-            "Windows is not sending mail links to Mailto Picker" +
+            "Windows is not sending mail links to gmail:to" +
             DescribeCurrentHandler() + ".\r\n\r\n" +
-            "Make Mailto Picker the handler? This replaces the current one.\r\n\r\n" +
+            "Make gmail:to the handler? This replaces the current one.\r\n\r\n" +
             "Until that is done, mail links keep going wherever they go today " +
             "and this app never sees them.",
             MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
@@ -50,7 +50,7 @@ internal static class RegistrationPrompt
         // some builds, so it is attempted rather than assumed.
         if (Registration.TryClaimDefault(out string? claimError))
         {
-            Show(owner, "Done. Mail links now open in Mailto Picker.",
+            Show(owner, "Done. Mail links now open in gmail:to.",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             return true;
         }
@@ -70,7 +70,7 @@ internal static class RegistrationPrompt
             Show(owner,
                 "Could not open Windows Settings:\r\n\r\n" + ex.Message +
                 "\r\n\r\nOpen Settings > Apps > Default apps by hand and set MAILTO " +
-                "to Mailto Picker.",
+                "to gmail:to.",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
             return false;
         }
@@ -86,7 +86,7 @@ internal static class RegistrationPrompt
             const string Directions =
                 "In Settings > Apps > Default apps, type MAILTO into " +
                 "\"Set a default for a file type or link type\", then use the " +
-                "MAILTO row that appears to choose Mailto Picker.";
+                "MAILTO row that appears to choose gmail:to.";
 
             string message = firstTry
                 ? "Settings is open.\r\n\r\n" + Directions + "\r\n\r\nThen choose Retry to check."

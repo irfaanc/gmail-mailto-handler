@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// Account list editor, shown when the app starts with no mailto: argument.
@@ -101,7 +101,7 @@ internal sealed class SettingsForm : Form
             _status, _about, _handler, _close,
         });
 
-        Text = "Mailto Picker settings";
+        Text = "gmail:to settings";
         AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
@@ -135,7 +135,7 @@ internal sealed class SettingsForm : Form
             MessageBox.Show(this,
                 $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}\r\n\r\n" +
                 "The change is shown here but is not on disk yet.",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -182,7 +182,7 @@ internal sealed class SettingsForm : Form
         if (SelfInstall.JustInstalled)
             note = $" Installed to {SelfInstall.InstalledDirectory}.";
 
-        Set("Mailto Picker is handling mail links." + note, SystemColors.GrayText);
+        Set("Handling mail links." + note, SystemColors.GrayText);
 
         void Set(string text, Color colour)
         {
@@ -330,7 +330,7 @@ internal sealed class SettingsForm : Form
         {
             MessageBox.Show(this,
                 "This is the only account. Add another before removing this one.",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -345,7 +345,7 @@ internal sealed class SettingsForm : Form
             : $"Remove \"{Accounts[index].Name}\"?\r\n\r\n" +
               $"{rules} rule{(rules == 1 ? "" : "s")} pointing at it will be removed too.";
 
-        DialogResult answer = MessageBox.Show(this, question, "Mailto Picker",
+        DialogResult answer = MessageBox.Show(this, question, "gmail:to",
             MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
@@ -403,9 +403,9 @@ internal sealed class SettingsForm : Form
             if (dialog.ShowDialog(this) != DialogResult.OK)
             {
                 MessageBox.Show(this,
-                    "Mailto Picker needs at least one Gmail account before it can send " +
+                    "At least one Gmail account is needed before this can send " +
                     "anything.\r\n\r\nRun it again when you are ready to add one.",
-                    "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
 
@@ -448,14 +448,14 @@ internal sealed class SettingsForm : Form
     private void StopHandling()
     {
         DialogResult answer = MessageBox.Show(this,
-            "Stop Mailto Picker handling mail links?",
-            "Mailto Picker", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            "Stop gmail:to handling mail links?",
+            "gmail:to", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
         if (!Registration.TryStopHandling(out string? error))
         {
             MessageBox.Show(this, "Could not stop handling mail links:\r\n\r\n" + error,
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 internal sealed class Account
 {
@@ -90,7 +90,7 @@ internal sealed class AppConfig
 
     [JsonIgnore]
     public static string DirectoryPath =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MailtoPicker");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "GmailTo");
 
     [JsonIgnore]
     public static string FilePath => Path.Combine(DirectoryPath, "config.json");

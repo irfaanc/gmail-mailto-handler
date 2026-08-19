@@ -73,7 +73,7 @@ this screen" and "an app cannot set a default" are both true at once.
 
 ### ms-settings deep links ignore registeredAppUser
 
-`ms-settings:defaultapps?registeredAppUser=MailtoPicker` lands on the generic
+`ms-settings:defaultapps?registeredAppUser=GmailTo` lands on the generic
 Default apps page, identical to plain `ms-settings:defaultapps`. The parameter is
 accepted and ignored — no error page, no benefit.
 
@@ -213,12 +213,12 @@ itself.
 
 ### A WinExe missing its .dll fails invisibly
 
-Copying only `MailtoPicker.exe` out of a framework-dependent publish gives a
+Copying only `GmailTo.exe` out of a framework-dependent publish gives a
 launcher with nothing to launch. It exits `0x8000809A` with no window and no
 message, because the error goes to stderr and a `WinExe` has no console. The
 Event Log has it:
 
-> The application to execute does not exist: `...\MailtoPicker.dll`
+> The application to execute does not exist: `...\GmailTo.dll`
 
 This is why the project publishes as a single file.
 

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-namespace MailtoPicker;
+namespace GmailTo;
 
 internal enum InstallOutcome
 {

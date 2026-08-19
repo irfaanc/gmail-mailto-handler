@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// A ListBox that reports when the user clicks the row that was already

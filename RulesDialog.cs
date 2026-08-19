@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// Lists the rules and lets them be deleted. Deliberately no add and no edit:
@@ -112,7 +112,7 @@ internal sealed class RulesDialog : Form
         DialogResult answer = MessageBox.Show(this,
             $"Remove the rule for {rule.Match}?\r\n\r\n" +
             "Mail to it will go back to asking which account to use.",
-            "Mailto Picker", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            "gmail:to", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
         _config.Rules.Remove(rule);
@@ -123,7 +123,7 @@ internal sealed class RulesDialog : Form
         catch (Exception ex)
         {
             MessageBox.Show(this, $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         Reload();

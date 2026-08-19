@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// A mailto: URI broken into the fields Gmail's compose URL cares about.

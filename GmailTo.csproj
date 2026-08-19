@@ -6,19 +6,19 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>MailtoPicker</AssemblyName>
-    <RootNamespace>MailtoPicker</RootNamespace>
+    <AssemblyName>GmailTo</AssemblyName>
+    <RootNamespace>GmailTo</RootNamespace>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <Version>1.0.0</Version>
-    <Product>Mailto Picker</Product>
-    <AssemblyTitle>Mailto Picker</AssemblyTitle>
+    <Product>gmail:to</Product>
+    <AssemblyTitle>gmail:to</AssemblyTitle>
     <Company>Irfaan Chaudhry</Company>
     <Copyright>Copyright (c) 2026 Irfaan Chaudhry</Copyright>
     <PackageProjectUrl>https://github.com/irfaanc/gmail-mailto-handler</PackageProjectUrl>
     <RepositoryUrl>https://github.com/irfaanc/gmail-mailto-handler</RepositoryUrl>
 
-    <!-- Publish as one file. MailtoPicker.exe on its own is only the launcher:
+    <!-- Publish as one file. GmailTo.exe on its own is only the launcher:
          the program lives in the .dll and the runtime version in the
          .runtimeconfig.json, so copying just the exe produces a launcher that
          fails before it can say anything, silently, because a WinExe has no
@@ -51,7 +51,7 @@
     <!-- Also carried as a resource so the windows can show it at whatever size
          they need. Reading it back off disk would not survive single-file
          publishing, where there is no file beside the exe to read. -->
-    <EmbeddedResource Include="ico\app.ico" LogicalName="MailtoPicker.app.ico" />
+    <EmbeddedResource Include="ico\app.ico" LogicalName="GmailTo.app.ico" />
   </ItemGroup>
 
 </Project>

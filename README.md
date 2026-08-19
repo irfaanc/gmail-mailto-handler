@@ -1,4 +1,4 @@
-# Mailto Picker
+# gmail:to
 
 A small Windows utility that intercepts `mailto:` links, asks which Gmail account
 you want to send from, and opens Gmail's compose window in your default browser.
@@ -36,8 +36,8 @@ to a particular service. The underlying problem is the same with or without one.
 
 | file | runs on | take this if |
 | --- | --- | --- |
-| `MailtoPicker.exe` | 32-bit, 64-bit, ARM | **you are not sure** |
-| `MailtoPicker-x64.exe` | 64-bit Windows | you already have the 64-bit .NET runtime |
+| `GmailTo.exe` | 32-bit, 64-bit, ARM | **you are not sure** |
+| `GmailTo-x64.exe` | 64-bit Windows | you already have the 64-bit .NET runtime |
 
 Both work on a normal 64-bit machine. The only thing the second saves you is a
 second runtime download.
@@ -47,7 +47,7 @@ is not code-signed. Click **More info**, then **Run anyway**. That prompt is
 expected — signing requires a certificate this project does not have.
 
 Run from Downloads, your Desktop, or a temp folder and it copies itself to
-`%LocalAppData%\Programs\MailtoPicker\` on that first run, registers from there,
+`%LocalAppData%\Programs\GmailTo\` on that first run, registers from there,
 and hands over to that copy, so the app you go on using is the permanent one. No
 admin rights needed. The file you downloaded is left where it is, yours to keep
 or bin. If you would rather choose the location, put it somewhere first and it
@@ -140,7 +140,7 @@ rules aiming at it, and says how many first.
 
 ## Settings
 
-Run `MailtoPicker.exe` with no arguments. Accounts can be added, edited,
+Run `GmailTo.exe` with no arguments. Accounts can be added, edited,
 reordered and removed, and the button at the bottom toggles between **Set as
 default mail handler** and **Stop handling mail links** depending on which state
 you are in.
@@ -151,7 +151,7 @@ association, it cannot be handed back to whoever held it before.
 
 ## Config
 
-`%AppData%\MailtoPicker\config.json`
+`%AppData%\GmailTo\config.json`
 
 ```json
 {
@@ -181,7 +181,7 @@ soon as it is used, seen, superseded, or a week old.
 ## Where it installs, and moving it
 
 Run from Downloads, the Desktop, or a temp folder, it copies itself to
-`%LocalAppData%\Programs\MailtoPicker\` and registers from there. Those are the
+`%LocalAppData%\Programs\GmailTo\` and registers from there. Those are the
 places a file sits when nobody has decided where it belongs yet, and a handler
 registered from one of them breaks the first time the folder is tidied.
 
@@ -215,10 +215,10 @@ way: start the new one once.
 All under `HKEY_CURRENT_USER`, no admin rights needed:
 
 - `Software\Classes\mailto` (+ `shell\open\command`, `DefaultIcon`)
-- `Software\Classes\MailtoPicker.Url.Mailto` — the ProgID that Capabilities and
+- `Software\Classes\GmailTo.Url.Mailto` — the ProgID that Capabilities and
   Windows' own `UserChoice` both point at
-- `Software\MailtoPicker\Capabilities` (+ `UrlAssociations\mailto`)
-- `Software\RegisteredApplications` → value `MailtoPicker`
+- `Software\GmailTo\Capabilities` (+ `UrlAssociations\mailto`)
+- `Software\RegisteredApplications` → value `GmailTo`
 
 **Stop handling mail links** removes all of them. Registering stashes whatever
 `Software\Classes\mailto` held beforehand and stopping puts it back, so adding
@@ -232,8 +232,8 @@ them needing admin rights:
 1. Open settings and click **Stop handling mail links**. That removes every
    registry entry listed above and puts back whatever held
    `Software\Classes\mailto` beforehand.
-2. Delete `%LocalAppData%\Programs\MailtoPicker\`.
-3. Delete `%AppData%\MailtoPicker\`, which holds `config.json` and any saved
+2. Delete `%LocalAppData%\Programs\GmailTo\`.
+3. Delete `%AppData%\GmailTo\`, which holds `config.json` and any saved
    forward.
 
 Step 1 cannot hand the association back to the app that held it before, because
@@ -246,12 +246,12 @@ association when the app owning it goes away.
 Requires the .NET 8 SDK.
 
 ```bash
-dotnet publish MailtoPicker.csproj -c Release -o publish
-dotnet publish MailtoPicker.csproj -c Release -r win-x64 -o publish-x64
+dotnet publish GmailTo.csproj -c Release -o publish
+dotnet publish GmailTo.csproj -c Release -r win-x64 -o publish-x64
 ```
 
 The first is the x86 build that runs everywhere; the second is the 64-bit one.
-Each produces a single self-contained-looking `MailtoPicker.exe` with everything
+Each produces a single self-contained-looking `GmailTo.exe` with everything
 bundled in — copy that one file, nothing goes with it.
 
 Neither is actually self-contained: both need the .NET Desktop Runtime, which is

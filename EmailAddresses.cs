@@ -1,4 +1,4 @@
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// Pulling a bare address out of a recipient field, which is messier than it

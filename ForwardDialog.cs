@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// Explains the last automatic forward and offers to undo it: send the same
@@ -64,7 +64,7 @@ internal sealed class ForwardDialog : Form
         ClientSize = new Size(424, 142);
         Controls.AddRange(new Control[] { _what, _when, _resend, _deleteRule, _close });
 
-        Text = "Mailto Picker";
+        Text = "gmail:to";
         AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
@@ -89,7 +89,7 @@ internal sealed class ForwardDialog : Form
         catch (FormatException ex)
         {
             MessageBox.Show(this, "The saved message could not be read:\r\n\r\n" + ex.Message,
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
 
@@ -116,7 +116,7 @@ internal sealed class ForwardDialog : Form
 
         if (removed == 0)
         {
-            MessageBox.Show(this, "That rule has already been removed.", "Mailto Picker",
+            MessageBox.Show(this, "That rule has already been removed.", "gmail:to",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         else
@@ -124,7 +124,7 @@ internal sealed class ForwardDialog : Form
             TrySave();
             MessageBox.Show(this,
                 $"Removed. Mail to {_record.MatchedRule} will ask which account to use again.",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         DialogResult = DialogResult.OK;
@@ -140,7 +140,7 @@ internal sealed class ForwardDialog : Form
         catch (Exception ex)
         {
             MessageBox.Show(this, $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}",
-                "Mailto Picker", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

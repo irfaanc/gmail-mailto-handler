@@ -2,7 +2,7 @@ using System.Drawing;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace MailtoPicker;
+namespace GmailTo;
 
 /// <summary>
 /// The app icon, loaded once from the embedded resource.
@@ -13,7 +13,7 @@ namespace MailtoPicker;
 /// </summary>
 internal static class AppIcon
 {
-    private const string ResourceName = "MailtoPicker.app.ico";
+    private const string ResourceName = "GmailTo.app.ico";
 
     private static Icon? _icon;
     private static bool _tried;
