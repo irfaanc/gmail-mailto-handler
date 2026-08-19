@@ -1,4 +1,4 @@
-# gmail:to
+# gmailto
 
 A small Windows utility that accepts your `mailto:` links, asks which Gmail
 account you want to send from, and opens Gmail's compose window in your default

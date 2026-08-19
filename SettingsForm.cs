@@ -101,7 +101,7 @@ internal sealed class SettingsForm : Form
             _status, _about, _handler, _close,
         });
 
-        Text = "gmail:to settings";
+        Text = "gmailto settings";
         AppIcon.Apply(this);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
@@ -135,7 +135,7 @@ internal sealed class SettingsForm : Form
             MessageBox.Show(this,
                 $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}\r\n\r\n" +
                 "The change is shown here but is not on disk yet.",
-                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -330,7 +330,7 @@ internal sealed class SettingsForm : Form
         {
             MessageBox.Show(this,
                 "This is the only account. Add another before removing this one.",
-                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -345,7 +345,7 @@ internal sealed class SettingsForm : Form
             : $"Remove \"{Accounts[index].Name}\"?\r\n\r\n" +
               $"{rules} rule{(rules == 1 ? "" : "s")} pointing at it will be removed too.";
 
-        DialogResult answer = MessageBox.Show(this, question, "gmail:to",
+        DialogResult answer = MessageBox.Show(this, question, "gmailto",
             MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
@@ -405,7 +405,7 @@ internal sealed class SettingsForm : Form
                 MessageBox.Show(this,
                     "At least one Gmail account is needed before this can send " +
                     "anything.\r\n\r\nRun it again when you are ready to add one.",
-                    "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
 
@@ -448,14 +448,14 @@ internal sealed class SettingsForm : Form
     private void StopHandling()
     {
         DialogResult answer = MessageBox.Show(this,
-            "Stop gmail:to handling mail links?",
-            "gmail:to", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            "Stop gmailto handling mail links?",
+            "gmailto", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
         if (!Registration.TryStopHandling(out string? error))
         {
             MessageBox.Show(this, "Could not stop handling mail links:\r\n\r\n" + error,
-                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
 

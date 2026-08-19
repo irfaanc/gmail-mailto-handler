@@ -26,9 +26,9 @@ internal static class Mail
         {
             string message = "Could not open the browser:\r\n\r\n" + ex.Message + "\r\n\r\nURL:\r\n" + url;
             if (owner is null)
-                MessageBox.Show(message, "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(message, "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Error);
             else
-                MessageBox.Show(owner, message, "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(owner, message, "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return false;
         }
     }

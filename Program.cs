@@ -5,7 +5,7 @@ namespace GmailTo;
 
 internal static class Program
 {
-    private const string Title = "gmail:to";
+    private const string Title = "gmailto";
 
     [STAThread]
     private static int Main(string[] args)

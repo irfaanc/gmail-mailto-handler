@@ -35,7 +35,7 @@ internal enum RegistrationStatus
 internal static class Registration
 {
     public const string AppKeyName = "GmailTo";
-    public const string DisplayName = "gmail:to";
+    public const string DisplayName = "gmailto";
     public const string Description = "Choose which Gmail account opens a mailto: link.";
     public const string ProgId = "GmailTo.Url.Mailto";
 

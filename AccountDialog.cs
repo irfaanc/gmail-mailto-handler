@@ -151,7 +151,7 @@ internal sealed class AccountDialog : Form
 
     private void Reject(string message, Control focus)
     {
-        MessageBox.Show(this, message, "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        MessageBox.Show(this, message, "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         DialogResult = DialogResult.None;
         focus.Focus();
     }

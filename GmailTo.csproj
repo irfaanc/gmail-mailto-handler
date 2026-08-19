@@ -11,8 +11,8 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <Version>1.0.0</Version>
-    <Product>gmail:to</Product>
-    <AssemblyTitle>gmail:to</AssemblyTitle>
+    <Product>gmailto</Product>
+    <AssemblyTitle>gmailto</AssemblyTitle>
     <Company>Irfaan Chaudhry</Company>
     <Copyright>Copyright (c) 2026 Irfaan Chaudhry</Copyright>
     <PackageProjectUrl>https://github.com/irfaanc/gmailto</PackageProjectUrl>

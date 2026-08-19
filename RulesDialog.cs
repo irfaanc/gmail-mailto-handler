@@ -112,7 +112,7 @@ internal sealed class RulesDialog : Form
         DialogResult answer = MessageBox.Show(this,
             $"Remove the rule for {rule.Match}?\r\n\r\n" +
             "Mail to it will go back to asking which account to use.",
-            "gmail:to", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            "gmailto", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (answer != DialogResult.Yes) return;
 
         _config.Rules.Remove(rule);
@@ -123,7 +123,7 @@ internal sealed class RulesDialog : Form
         catch (Exception ex)
         {
             MessageBox.Show(this, $"Could not save {AppConfig.FilePath}:\r\n\r\n{ex.Message}",
-                "gmail:to", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                "gmailto", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         Reload();
