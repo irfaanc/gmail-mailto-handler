@@ -162,6 +162,12 @@ internal sealed class SettingsForm : Form
             _ => "",
         };
 
+        // An install is the more useful thing to report when it happens: it is
+        // the surprising event, and it explains why the registered path is not
+        // the copy the user just double-clicked.
+        if (SelfInstall.JustInstalled)
+            note = $" Installed to {SelfInstall.InstalledDirectory}.";
+
         Set("Mailto Picker is handling mail links." + note, SystemColors.GrayText);
 
         void Set(string text, Color colour)

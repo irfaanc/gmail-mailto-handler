@@ -16,6 +16,23 @@ internal static class Program
 
         try
         {
+            // Our own marker, taken off before anything else can mistake it for a
+            // mailto: link. Set by the copy that installed us, so this process
+            // knows it was just put in place and can say so.
+            args = SelfInstall.TakeJustInstalledFlag(args);
+
+            // Installing happens before anything else, and before the config is
+            // read, because it is about where the app lives rather than what it
+            // does. Deliberately not gated on StoppedHandling: that setting is
+            // about handling mail links, and a downloaded copy still belongs in
+            // a permanent home either way.
+            //
+            // Done here rather than in the two run paths, so the settings window
+            // opening from inside RunPicker cannot start a second copy.
+            if (SelfInstall.EnsureInstalled() is InstallOutcome.Installed or InstallOutcome.Updated
+                && SelfInstall.TryHandOff(args))
+                return 0;
+
             if (args.Length == 0 || IsSettingsFlag(args[0]))
                 return RunSettings();
 
@@ -89,9 +106,16 @@ internal static class Program
 
         if (config.Accounts.Count == 0)
         {
-            ShowWarning(
-                "No accounts are configured yet, so there is nowhere to send this.\r\n\r\n" +
-                "Add one in the settings window that opens next and this message will carry on.");
+            // On a first run this is the tail of setup rather than a complaint:
+            // the app has just put itself somewhere permanent and needs the one
+            // thing it cannot infer. Said that way when an install just
+            // happened, and as a plain gap otherwise.
+            ShowWarning(SelfInstall.JustInstalled
+                ? "Mailto Picker installed itself to\r\n" + SelfInstall.InstalledDirectory +
+                  "\r\n\r\nOne step left: the account to send from. The window that opens " +
+                  "next asks for it, then this message will carry on."
+                : "No accounts are configured yet, so there is nowhere to send this.\r\n\r\n" +
+                  "Add one in the settings window that opens next and this message will carry on.");
             RunSettings();
 
             // Pick up whatever the settings window just wrote, then continue

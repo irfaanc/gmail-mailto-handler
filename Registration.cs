@@ -43,19 +43,13 @@ internal static class Registration
     private const string BackupPath = @"Software\" + AppKeyName + @"\PreviousMailtoHandler";
     private const string MailtoClassPath = @"Software\Classes\mailto";
 
-    public static string ExePath
-    {
-        get
-        {
-            string? path = Environment.ProcessPath;
-            if (!string.IsNullOrEmpty(path)) return path;
-
-            // Fallback for odd hosting scenarios. Not Assembly.Location, which
-            // is an empty string in a single-file app and would quietly put a
-            // bogus path into the registry.
-            return Path.Combine(AppContext.BaseDirectory, AppKeyName + ".exe");
-        }
-    }
+    /// <summary>
+    /// The path to record in the registry. Normally the copy being run, but the
+    /// installed copy once <see cref="SelfInstall"/> has put one in place, so a
+    /// mail link opens the permanent copy rather than the one in Downloads that
+    /// is about to be tidied away.
+    /// </summary>
+    public static string ExePath => SelfInstall.PathToRegister;
 
     private static string CommandFor(string exe) => $"\"{exe}\" \"%1\"";
 
