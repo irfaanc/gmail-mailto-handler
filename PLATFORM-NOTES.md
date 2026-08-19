@@ -119,6 +119,30 @@ sequence. Signing an account in or out renumbers the rest, and the same `N` mean
 different mailboxes in different browsers or profiles. Storing it is storing a
 pointer into someone else's mutable list.
 
+### Gmail's own mailto handler composes from slot 0, silently
+
+Chrome and Edge let Gmail register itself as the `mailto` handler, via
+`navigator.registerProtocolHandler("mailto",
+"https://mail.google.com/mail/?extsrc=mailto&url=%s", "Gmail")`. The template
+carries no account selector at all: the only variable is the mailto link, and
+there is one registration per browser profile rather than one per account.
+
+Measured 2026-08-18 with two accounts signed in, `u/0` and `u/1` confirmed
+beforehand as different mailboxes. Loading the handler URL redirected to:
+
+```
+https://mail.google.com/mail/u/0/?fs=1&tf=cm&source=mailto&su=...&to=...
+```
+
+It composed straight from `u/0` with no account chooser. So Gmail's own handler
+resolves through the positional index described above, with all of that index's
+problems, and the user has no per-message say.
+
+This is the closest thing to a built-in alternative to this app, and it is worth
+being precise about the difference rather than dismissive: for a single-account
+user it works fine and needs no software. What it cannot do is name a mailbox,
+which is the whole reason `authuser` is used here.
+
 ---
 
 ## WinForms
