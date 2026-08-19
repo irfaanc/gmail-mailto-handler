@@ -3,3 +3,5 @@ obj/
 publish/
 *.user
 publish-x64/
+artifacts/
+notes.md
