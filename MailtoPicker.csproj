@@ -13,6 +13,10 @@
     <Version>1.0.0</Version>
     <Product>Mailto Picker</Product>
     <AssemblyTitle>Mailto Picker</AssemblyTitle>
+    <Company>Irfaan Chaudhry</Company>
+    <Copyright>Copyright (c) 2026 Irfaan Chaudhry</Copyright>
+    <PackageProjectUrl>https://github.com/irfaanc/gmail-mailto-handler</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/irfaanc/gmail-mailto-handler</RepositoryUrl>
 
     <!-- Publish as one file. MailtoPicker.exe on its own is only the launcher:
          the program lives in the .dll and the runtime version in the

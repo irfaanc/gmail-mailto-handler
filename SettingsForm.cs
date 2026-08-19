@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Reflection;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -30,6 +32,7 @@ internal sealed class SettingsForm : Form
     private readonly Button _handler = new();
     private readonly Button _close = new();
     private readonly Label _status = new();
+    private readonly LinkLabel _about = new();
 
     private readonly RegistrationStatus _registrationStatus;
     private readonly string? _registrationError;
@@ -80,11 +83,22 @@ internal sealed class SettingsForm : Form
         _close.SetBounds(429, 300, 75, 28);
         _close.DialogResult = DialogResult.OK;
 
+        // Sits in the gap that was already there between the handler toggle and
+        // Close. Worth carrying in the window rather than only in the README:
+        // the app installs itself somewhere the user did not pick, so a year on
+        // the exe may be the only trace of it they can find, and this is the
+        // only route from there back to the source, to updates, or to somewhere
+        // to report a fault.
+        _about.Text = AboutText();
+        _about.AutoSize = true;
+        _about.SetBounds(248, 306, 0, 0);
+        _about.LinkClicked += (_, _) => OpenProjectPage();
+
         ClientSize = new Size(516, 340);
         Controls.AddRange(new Control[]
         {
             _list, _add, _edit, _remove, _up, _down, _rules,
-            _status, _handler, _close,
+            _status, _about, _handler, _close,
         });
 
         Text = "Mailto Picker settings";
@@ -174,6 +188,40 @@ internal sealed class SettingsForm : Form
         {
             _status.Text = text;
             _status.ForeColor = colour;
+        }
+    }
+
+    /// <summary>Where this came from, for anyone who finds the exe and nothing else.</summary>
+    private const string ProjectUrl = "https://github.com/irfaanc/gmail-mailto-handler";
+
+    /// <summary>
+    /// Name and version for the link. The informational version carries the
+    /// commit as "1.0.0+&lt;sha&gt;", which belongs in the file properties rather
+    /// than in a window, so only the number is shown.
+    /// </summary>
+    private static string AboutText()
+    {
+        string? version = typeof(SettingsForm).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+        int plus = version?.IndexOf('+') ?? -1;
+        if (plus >= 0) version = version![..plus];
+
+        return string.IsNullOrEmpty(version)
+            ? Registration.DisplayName
+            : $"{Registration.DisplayName} {version}";
+    }
+
+    private static void OpenProjectPage()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(ProjectUrl) { UseShellExecute = true });
+        }
+        catch
+        {
+            // A convenience link that cannot open is not worth interrupting a
+            // settings window over.
         }
     }
 
