@@ -34,14 +34,13 @@ to a particular service. The underlying problem is the same with or without one.
 **1. Download it.** One file, from the
 [latest release](../../releases/latest):
 
-| file | for |
-| --- | --- |
-| `MailtoPicker.exe` | anything — 32-bit, 64-bit, or ARM |
-| `MailtoPicker-x64.exe` | 64-bit Windows, if you already have 64-bit .NET |
+| file | runs on | take this if |
+| --- | --- | --- |
+| `MailtoPicker.exe` | 32-bit, 64-bit, ARM | **you are not sure** |
+| `MailtoPicker-x64.exe` | 64-bit Windows | you already have the 64-bit .NET runtime |
 
-Either works on a normal 64-bit machine. The first is 32-bit and runs everywhere
-Windows does; the second avoids a second runtime download if you already have the
-64-bit .NET installed. If you have no idea, take the first.
+Both work on a normal 64-bit machine. The only thing the second saves you is a
+second runtime download.
 
 **2. Run it.** Windows will say **"Windows protected your PC"**, because the file
 is not code-signed. Click **More info**, then **Run anyway**. That prompt is
@@ -190,9 +189,13 @@ Put the exe somewhere yourself and it stays put. A deliberate location is left
 alone, because silently relocating a file you filed on purpose is worse than the
 problem being solved.
 
-Downloading a newer release and running it from Downloads is also how you
-upgrade: it replaces the installed copy and keeps the registration pointing at
-the same place. The download is left alone, as ever.
+### Upgrading
+
+Download the newer release and run it from Downloads. It replaces the installed
+copy, keeps the registration pointing at the same place, and leaves your accounts
+and rules alone. The download is left alone too, as ever.
+
+### Moving it
 
 To move an installed copy, move it and start it once in its new home. The
 registry entries name an absolute path, and the app repoints them at itself
@@ -220,6 +223,23 @@ All under `HKEY_CURRENT_USER`, no admin rights needed:
 **Stop handling mail links** removes all of them. Registering stashes whatever
 `Software\Classes\mailto` held beforehand and stopping puts it back, so adding
 and removing this app leaves an existing handler untouched.
+
+### Uninstalling
+
+There is no uninstaller, because there was no installer. Three steps, none of
+them needing admin rights:
+
+1. Open settings and click **Stop handling mail links**. That removes every
+   registry entry listed above and puts back whatever held
+   `Software\Classes\mailto` beforehand.
+2. Delete `%LocalAppData%\Programs\MailtoPicker\`.
+3. Delete `%AppData%\MailtoPicker\`, which holds `config.json` and any saved
+   forward.
+
+Step 1 cannot hand the association back to the app that held it before, because
+Windows allows `UserChoice` to be deleted but never written. Mail links fall
+through to whatever Windows decides is next, which is what happens to any file
+association when the app owning it goes away.
 
 ## Build
 
