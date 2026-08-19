@@ -23,19 +23,21 @@ Either works on a normal 64-bit machine. The first is 32-bit and runs everywhere
 Windows does; the second avoids a second runtime download if you already have the
 64-bit .NET installed. If you have no idea, take the first.
 
-**2. Put it somewhere permanent.** It registers the path it is run from, so pick
-its final home now — `%LocalAppData%\Programs\MailtoPicker\` is a good spot and
-needs no admin rights. Moving it later is fine, you just have to start it once
-from the new location.
-
-**3. Run it.** Windows will say **"Windows protected your PC"**, because the file
+**2. Run it.** Windows will say **"Windows protected your PC"**, because the file
 is not code-signed. Click **More info**, then **Run anyway**. That prompt is
 expected — signing requires a certificate this project does not have.
 
-**4. Add an account.** It asks straight away. Give it a name and the Gmail
+Run from Downloads, your Desktop, or a temp folder and it copies itself to
+`%LocalAppData%\Programs\MailtoPicker\` on that first run, registers from there,
+and hands over to that copy, so the app you go on using is the permanent one. No
+admin rights needed. The file you downloaded is left where it is, yours to keep
+or bin. If you would rather choose the location, put it somewhere first and it
+leaves your choice alone.
+
+**3. Add an account.** It asks straight away. Give it a name and the Gmail
 address to send from.
 
-**5. Say yes to becoming the mail handler.** It offers as soon as the account
+**4. Say yes to becoming the mail handler.** It offers as soon as the account
 exists. Two dialogs in a row on a first run is normal.
 
 And that's it. Clicking a `mailto:` link anywhere now brings up the
@@ -157,11 +159,25 @@ One other file lives beside it: `last-forward.uri`, holding the link of the last
 automatic forward so it can be re-sent. It holds the draft, so it is deleted as
 soon as it is used, seen, superseded, or a week old.
 
-## Moving the app
+## Where it installs, and moving it
 
-Move it and start it once in its new home. The registry entries name an absolute
-path, and the app repoints them at itself whenever the running copy is not the
-one on record — whichever copy you last started wins.
+Run from Downloads, the Desktop, or a temp folder, it copies itself to
+`%LocalAppData%\Programs\MailtoPicker\` and registers from there. Those are the
+places a file sits when nobody has decided where it belongs yet, and a handler
+registered from one of them breaks the first time the folder is tidied.
+
+Put the exe somewhere yourself and it stays put. A deliberate location is left
+alone, because silently relocating a file you filed on purpose is worse than the
+problem being solved.
+
+Downloading a newer release and running it from Downloads is also how you
+upgrade: it replaces the installed copy and keeps the registration pointing at
+the same place. The download is left alone, as ever.
+
+To move an installed copy, move it and start it once in its new home. The
+registry entries name an absolute path, and the app repoints them at itself
+whenever the running copy is not the one on record — whichever copy you last
+started wins.
 
 The repair happens on *start*, so you have to open the app yourself. A mail link
 cannot launch a path that is not there, and so cannot trigger it.
@@ -221,6 +237,7 @@ The icon is `ico\app.ico`, seven sizes built from the PNGs beside it.
 | `AccountDialog.cs` | Add/edit one account |
 | `RulesDialog.cs` | List and remove rules |
 | `Registration.cs` | HKCU registry entries and self-healing |
+| `SelfInstall.cs` | Copying itself to a permanent home on first run |
 | `RegistrationPrompt.cs` | The offer to become the handler, and the walkthrough |
 
 The forms are hand-written, with no `.Designer.cs` files, but follow the shape
