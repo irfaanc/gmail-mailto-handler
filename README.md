@@ -11,6 +11,8 @@ Teach it what account to route your email to (ex: *anything at this domain goes
 from my work account*), and it will do it automatically! Without scripting, or
 hand-edited configuration files.
 
+![The gmailto picker: a small window listing your Gmail accounts, asking which one to send from](docs/picker.png)
+
 ## Why
 
 Click a mail link on Windows and it opens whatever Windows picked years ago,
